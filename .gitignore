@@ -1,0 +1,11 @@
+node_modules
+
+# Build output
+dist/
+out/
+
+# VS Code test binaries & cache
+.vscode-test/
+
+# Local tooling
+.DS_Store
