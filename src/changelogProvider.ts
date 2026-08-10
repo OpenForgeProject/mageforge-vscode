@@ -56,8 +56,6 @@ export class ChangelogViewProvider {
         const nonce = getNonce();
         const marketplaceUrl =
             'https://marketplace.visualstudio.com/items?itemName=OpenForgeProject.mageforge';
-        const installCommand = `code --install-extension OpenForgeProject.mageforge`;
-
         return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,6 +101,7 @@ export class ChangelogViewProvider {
             align-items: center;
             gap: 6px;
             padding: 5px 12px;
+            margin-bottom: 20px;
             border-radius: 999px;
             font-size: 11px;
             font-weight: 700;
@@ -128,7 +127,7 @@ export class ChangelogViewProvider {
             order: -1;
             width: 96px;
             height: 96px;
-            margin: 6px 0 14px;
+            margin: 6px 0 25px;
             filter: drop-shadow(0 10px 24px color-mix(in srgb, var(--accent) 25%, transparent));
             transition: transform 0.35s ease;
         }
@@ -225,6 +224,13 @@ export class ChangelogViewProvider {
         .changelog {
             margin-top: 34px;
         }
+        .changelog-intro {
+            margin-bottom: 32px;
+            padding: 22px 24px;
+            border-radius: var(--radius);
+            background: color-mix(in srgb, var(--vscode-sideBar-background) 50%, transparent);
+            border: 1px solid var(--border);
+        }
         .release {
             position: relative;
             margin-bottom: 32px;
@@ -237,6 +243,10 @@ export class ChangelogViewProvider {
         .release:hover {
             border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
             box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+        .release-header {
+            position: relative;
+            margin-bottom: 16px;
         }
         .release-heading {
             display: flex;
@@ -264,8 +274,8 @@ export class ChangelogViewProvider {
         }
         .release-latest {
             position: absolute;
-            top: -10px;
-            right: 16px;
+            top: 0px;
+            right: -55px;
             padding: 3px 10px;
             border-radius: 999px;
             font-size: 10px;
@@ -350,11 +360,10 @@ export class ChangelogViewProvider {
 <body>
     <div class="container">
         <div class="hero">
-            <span class="badge-new">New Release</span>
+            <span class="badge-new">New Release ${subtitle}</span>
             <img class="logo" src="${logoUri}" alt="MageForge">
             <h1>What's new in MageForge</h1>
             <p>See what changed in the latest version of the extension.</p>
-            ${subtitle ? `<span class="version-pill"><i class="ti ti-rocket"></i> ${subtitle}</span>` : ''}
             <div class="actions">
                 <button class="btn btn-primary" data-url="${marketplaceUrl}">
                     <i class="ti ti-star"></i> Rate on Marketplace
@@ -365,11 +374,6 @@ export class ChangelogViewProvider {
                 <button class="btn" data-url="${marketplaceUrl}">
                     <i class="ti ti-download"></i> Marketplace
                 </button>
-            </div>
-            <div class="install-bar">
-                <i class="ti ti-terminal-2"></i>
-                <code>${installCommand}</code>
-                <button class="btn btn-mini" data-copy="${installCommand}">Copy</button>
             </div>
         </div>
 
@@ -384,16 +388,6 @@ export class ChangelogViewProvider {
         document.querySelectorAll('[data-url]').forEach((el) => {
             el.addEventListener('click', () => {
                 vscode.postMessage({ url: el.dataset.url });
-            });
-        });
-
-        document.querySelectorAll('[data-copy]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                navigator.clipboard.writeText(btn.dataset.copy).then(() => {
-                    const original = btn.textContent;
-                    btn.textContent = 'Copied!';
-                    setTimeout(() => (btn.textContent = original), 1200);
-                });
             });
         });
     </script>
@@ -435,9 +429,15 @@ export class ChangelogViewProvider {
         // Links [text](url)
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 
-        // Split into top-level release sections (## ...)
+        // Split into top-level release sections (## ...). Content before the first
+        // release heading is preserved as an intro block, not treated as a release.
         const releases: string[] = [];
-        const sections = html.split(/^##\s+/gm).filter(Boolean);
+        let introHtml = '';
+        const sections = html.split(/^##\s+/gm);
+        const leadingContent = sections.shift();
+        if (leadingContent && leadingContent.trim()) {
+            introHtml = `<div class="changelog-intro">${this.wrapListItems(this.replaceCategoryHeaders(leadingContent.trim()))}</div>`;
+        }
 
         sections.forEach((section, index) => {
             const lines = section.split('\n');
@@ -453,18 +453,17 @@ export class ChangelogViewProvider {
             const body = this.wrapListItems(this.replaceCategoryHeaders(rest));
 
             const latestBadge = index === 0 ? '<span class="release-latest">Latest</span>' : '';
-            const dateTag = dateMatch ? `<span class="release-date">${dateMatch[1]}</span>` : '';
             const heading = compareUrl ? `<a href="${compareUrl}">${version}</a>` : version;
 
-            releases.push(
-                `<article class="release">${latestBadge}<h2 class="release-heading">${heading}${dateTag}</h2>${body}</article>`,
-            );
+            const releaseHeader = `<header class="release-header">${latestBadge}<h2 class="release-heading">${heading}</h2></header>`;
+            releases.push(`<article class="release">${releaseHeader}${body}</article>`);
         });
 
-        let output =
+        const releasesHtml =
             releases.length > 0
                 ? releases.join('\n')
                 : `<div class="empty-state">No release notes available.</div>`;
+        let output = `${introHtml}${releasesHtml}`;
 
         // Restore fenced code blocks
         codeBlocks.forEach((block, index) => {
