@@ -6,11 +6,35 @@ The official VS Code integration for [MageForge](https://github.com/OpenForgePro
 
 ## Features
 
-_No features yet._
+MageForge adds a dedicated **MageForge** activity bar to VS Code that surfaces the most common [MageForge CLI](https://github.com/OpenForgeProject/mageforge) commands without leaving the editor.
+
+- **Welcome view** – quick access to commands and helpful resources.
+- **Commands view** – run MageForge CLI commands with a single click:
+    - Theme: Build, Watch, Clean, List, Inspector
+    - Hyvä: Tokens, Compatibility Check
+    - Template: Override
+    - Dependencies: Update
+    - System: Check, Version
+- **Themes view** – browse installed Magento themes (frontend/adminhtml), build, watch, or clean a theme via the context menu, and refresh the list.
+- **Template override** – right-click any template file in the Explorer and choose **MageForge > Override File…** to copy it into a selected theme.
+- **Integrated terminal output** – commands run in named VS Code terminals inside your Magento root directory.
+- **DDEV aware** – automatically runs `bin/magento` through DDEV when a `.ddev` directory is detected, or force it via settings.
 
 ## Requirements
 
 - VS Code `^1.125.0`
+- A Magento 2 workspace with [MageForge](https://github.com/OpenForgeProject/mageforge) installed
+- PHP available on your system (or via DDEV)
+
+## Configuration
+
+The extension contributes the following settings under the `mageforge.` prefix:
+
+| Setting                     | Default  | Description                                                                                         |
+| --------------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `mageforge.magentoRootPath` | `""`     | Path to the Magento root directory (contains `bin/magento`). Defaults to the workspace folder.      |
+| `mageforge.phpBinary`       | `"php"`  | PHP binary used to run `bin/magento` (e.g. `php` or `ddev php`).                                    |
+| `mageforge.useDdev`         | `"auto"` | Run commands inside DDEV (`ddev php bin/magento ...`). `auto` detects DDEV via a `.ddev` directory. |
 
 ## Development
 
