@@ -153,4 +153,3 @@ async function runMageforgeCommand(
 }
 
 export function deactivate() {}
-

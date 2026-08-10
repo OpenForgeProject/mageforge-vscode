@@ -38,14 +38,11 @@ export class ChangelogViewProvider {
         );
 
         this.panel.webview.html = this.getHtml(this.panel.webview, subtitle);
-        this.panel.webview.onDidReceiveMessage(
-            (message: { url?: string }) => {
-                if (message.url) {
-                    void vscode.env.openExternal(vscode.Uri.parse(message.url));
-                }
-            },
-            undefined,
-        );
+        this.panel.webview.onDidReceiveMessage((message: { url?: string }) => {
+            if (message.url) {
+                void vscode.env.openExternal(vscode.Uri.parse(message.url));
+            }
+        }, undefined);
         this.panel.onDidDispose(() => {
             this.panel = undefined;
         });
@@ -57,7 +54,8 @@ export class ChangelogViewProvider {
             vscode.Uri.joinPath(this.extensionUri, 'resources', 'assets', 'MageForge-Logo.svg'),
         );
         const nonce = getNonce();
-        const marketplaceUrl = 'https://marketplace.visualstudio.com/items?itemName=OpenForgeProject.mageforge';
+        const marketplaceUrl =
+            'https://marketplace.visualstudio.com/items?itemName=OpenForgeProject.mageforge';
         const installCommand = `code --install-extension OpenForgeProject.mageforge`;
 
         return /* html */ `<!DOCTYPE html>
@@ -452,22 +450,21 @@ export class ChangelogViewProvider {
             const compareUrl = headingMatch?.[2];
             const dateMatch = headingLine.match(/(\d{4}-\d{2}-\d{2})/);
 
-            const body = this.wrapListItems(
-                this.replaceCategoryHeaders(rest),
-            );
+            const body = this.wrapListItems(this.replaceCategoryHeaders(rest));
 
             const latestBadge = index === 0 ? '<span class="release-latest">Latest</span>' : '';
             const dateTag = dateMatch ? `<span class="release-date">${dateMatch[1]}</span>` : '';
-            const heading = compareUrl
-                ? `<a href="${compareUrl}">${version}</a>`
-                : version;
+            const heading = compareUrl ? `<a href="${compareUrl}">${version}</a>` : version;
 
-            releases.push(`<article class="release">${latestBadge}<h2 class="release-heading">${heading}${dateTag}</h2>${body}</article>`);
+            releases.push(
+                `<article class="release">${latestBadge}<h2 class="release-heading">${heading}${dateTag}</h2>${body}</article>`,
+            );
         });
 
-        let output = releases.length > 0
-            ? releases.join('\n')
-            : `<div class="empty-state">No release notes available.</div>`;
+        let output =
+            releases.length > 0
+                ? releases.join('\n')
+                : `<div class="empty-state">No release notes available.</div>`;
 
         // Restore fenced code blocks
         codeBlocks.forEach((block, index) => {
@@ -494,10 +491,7 @@ export class ChangelogViewProvider {
     }
 
     private escapeHtml(text: string): string {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     private categoryHeader(title: string, cssClass: string, icon: string): string {

@@ -35,6 +35,10 @@ jobs:
             - name: Check formatting
               run: npm run format:check
 
+            - name: Show formatting diff on failure
+              if: failure()
+              run: npx prettier --check . || true && npx prettier --write . && git diff --exit-code
+
             - name: Lint
               run: npm run lint
 
