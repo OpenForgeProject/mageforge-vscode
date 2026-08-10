@@ -80,6 +80,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         void webview.postMessage({
             type: 'versionInfo',
             mageforge: installedVersion,
+            latest: latestVersion,
             outdated,
             isDev,
         });
@@ -102,11 +103,22 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
     }
 
     private async getLatestMageforgeVersion(): Promise<string | undefined> {
+        const apiVersion = await this.getLatestMageforgeVersionFromApi();
+        if (apiVersion) {
+            return apiVersion;
+        }
+        // Fall back to the release redirect page when the API rate limit is exceeded.
+        return this.getLatestMageforgeVersionFromRedirect();
+    }
+
+    private async getLatestMageforgeVersionFromApi(): Promise<string | undefined> {
         return new Promise((resolve) => {
             execFile(
                 'curl',
                 [
                     '-s',
+                    '-A',
+                    'mageforge-vscode',
                     '--max-time',
                     '3',
                     'https://api.github.com/repos/OpenForgeProject/mageforge/releases/latest',
@@ -122,6 +134,30 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
                     } catch {
                         resolve(undefined);
                     }
+                },
+            );
+        });
+    }
+
+    private async getLatestMageforgeVersionFromRedirect(): Promise<string | undefined> {
+        return new Promise((resolve) => {
+            execFile(
+                'curl',
+                [
+                    '-sI',
+                    '-A',
+                    'mageforge-vscode',
+                    '--max-time',
+                    '3',
+                    'https://github.com/OpenForgeProject/mageforge/releases/latest',
+                ],
+                (error, stdout) => {
+                    if (error) {
+                        resolve(undefined);
+                        return;
+                    }
+                    const match = stdout.match(/location:\s*.*\/tag\/v?([^\s/]+)/i);
+                    resolve(match?.[1]);
                 },
             );
         });
@@ -273,6 +309,10 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         .badge-version.dev {
             background: color-mix(in srgb, #e8a838 20%, transparent);
             color: #e8a838;
+        }
+        .badge-version.unknown {
+            background: color-mix(in srgb, #808080 20%, transparent);
+            color: var(--vscode-descriptionForeground, #808080);
         }
         .badge-version.hidden {
             display: none;
@@ -498,12 +538,16 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
                     if (data.isDev) {
                         text += ' (dev)';
                         versionBadge.classList.add('dev');
-                    } else if (data.outdated) {
+                    } else if (data.latest && data.outdated) {
                         text += ' (outdated)';
                         versionBadge.classList.add('outdated');
-                        versionBadge.title = 'Update available: v' + data.mageforge + ' → latest';
-                    } else {
+                        versionBadge.title = 'Update available: v' + data.mageforge + ' → v' + data.latest;
+                    } else if (data.latest && !data.outdated) {
                         text += ' (latest)';
+                    } else {
+                        text += ' (update check unavailable)';
+                        versionBadge.classList.add('unknown');
+                        versionBadge.title = 'Could not reach GitHub to check for updates';
                     }
                     versionBadge.textContent = text;
                 } else {
