@@ -17,7 +17,12 @@
         "Other"
     ],
     "activationEvents": [
-        "workspaceContains:**/app/etc/env.php"
+        "workspaceContains:**/app/etc/env.php",
+        "workspaceContains:**/registration.php",
+        "onCommand:mageforge.template.overrideFile",
+        "onView:mageforge.welcome",
+        "onView:mageforge.commands",
+        "onView:mageforge.themes"
     ],
     "main": "./dist/extension.js",
     "contributes": {
@@ -149,6 +154,12 @@
                 "title": "Refresh Themes",
                 "category": "MageForge",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "mageforge.template.overrideFile",
+                "title": "Override File…",
+                "category": "MageForge",
+                "icon": "$(copy)"
             }
         ],
         "menus": {
@@ -162,7 +173,7 @@
                 {
                     "submenu": "mageforge.explorer",
                     "group": "mageforge",
-                    "when": "explorerResourceIsFolder"
+                    "when": "mageforge.active"
                 }
             ],
             "view/title": [
@@ -187,6 +198,13 @@
                     "command": "mageforge.theme.clean",
                     "when": "view == mageforge.themes && viewItem == mageforgeTheme",
                     "group": "mageforge@3"
+                }
+            ],
+            "mageforge.explorer": [
+                {
+                    "command": "mageforge.template.overrideFile",
+                    "when": "!explorerResourceIsFolder",
+                    "group": "mageforge@1"
                 }
             ]
         },

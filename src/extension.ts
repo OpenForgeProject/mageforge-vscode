@@ -8,6 +8,9 @@ export function activate(context: vscode.ExtensionContext) {
     const commandsProvider = new CommandsProvider();
     const themesProvider = new ThemesProvider();
 
+    // Show menu entries immediately - the extension handles missing Magento gracefully.
+    void vscode.commands.executeCommand('setContext', 'mageforge.active', true);
+
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             WelcomeViewProvider.viewType,
@@ -28,7 +31,53 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('mageforge.refreshThemes', () => themesProvider.refresh()),
+        vscode.commands.registerCommand(
+            'mageforge.template.overrideFile',
+            async (uri?: vscode.Uri) => {
+                await overrideFile(uri, themesProvider);
+            },
+        ),
     );
+}
+
+/**
+ * Explorer context menu: override the selected template file in a chosen theme.
+ * Runs: bin/magento mageforge:template:override <file> --theme <Vendor/theme>
+ */
+async function overrideFile(
+    uri: vscode.Uri | undefined,
+    themesProvider: ThemesProvider,
+): Promise<void> {
+    if (!uri) {
+        uri = vscode.window.activeTextEditor?.document.uri;
+    }
+    if (!uri) {
+        void vscode.window.showErrorMessage('MageForge: No file selected.');
+        return;
+    }
+
+    const magentoRoot = getMagentoRoot();
+    if (!magentoRoot) {
+        void vscode.window.showErrorMessage('MageForge: No workspace folder open.');
+        return;
+    }
+
+    // Pick the target theme (frontend themes only make sense for overrides).
+    const themes = await themesProvider.getThemeCodes();
+    const theme = await vscode.window.showQuickPick(themes, {
+        placeHolder: 'Override into which theme?',
+        title: `MageForge: Override ${uri.path.split('/').pop()}`,
+    });
+    if (!theme) {
+        return;
+    }
+
+    const commandLine = buildCommandLine(magentoRoot, 'mageforge:template:override', [
+        `'${uri.fsPath}'`,
+        '--theme',
+        theme,
+    ]);
+    runInTerminal('MageForge: template:override', commandLine, magentoRoot);
 }
 
 async function runMageforgeCommand(
