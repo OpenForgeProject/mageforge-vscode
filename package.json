@@ -10,9 +10,181 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [],
+    "activationEvents": [
+        "workspaceContains:**/app/etc/env.php"
+    ],
     "main": "./dist/extension.js",
-    "contributes": {},
+    "contributes": {
+        "configuration": {
+            "title": "MageForge",
+            "properties": {
+                "mageforge.magentoRootPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to the Magento root directory (contains bin/magento). Defaults to the workspace folder."
+                },
+                "mageforge.phpBinary": {
+                    "type": "string",
+                    "default": "php",
+                    "description": "PHP binary used to run bin/magento (e.g. 'php' or 'ddev php')."
+                },
+                "mageforge.useDdev": {
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "always",
+                        "never"
+                    ],
+                    "default": "auto",
+                    "markdownDescription": "Run commands inside DDEV (`ddev php bin/magento ...`). `auto` detects DDEV via a `.ddev` directory in the Magento root."
+                }
+            }
+        },
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "mageforge",
+                    "title": "MageForge",
+                    "icon": "resources/assets/MageForge-Logo.svg"
+                }
+            ]
+        },
+        "views": {
+            "mageforge": [
+                {
+                    "id": "mageforge.commands",
+                    "name": "Commands",
+                    "icon": "resources/assets/MageForge-Logo.svg",
+                    "contextualTitle": "MageForge"
+                },
+                {
+                    "id": "mageforge.themes",
+                    "name": "Themes",
+                    "contextualTitle": "MageForge Themes"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "mageforge.theme.build",
+                "title": "Theme: Build",
+                "category": "MageForge",
+                "icon": "$(tools)"
+            },
+            {
+                "command": "mageforge.theme.watch",
+                "title": "Theme: Watch",
+                "category": "MageForge",
+                "icon": "$(eye)"
+            },
+            {
+                "command": "mageforge.theme.clean",
+                "title": "Theme: Clean",
+                "category": "MageForge",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "mageforge.theme.list",
+                "title": "Theme: List",
+                "category": "MageForge",
+                "icon": "$(list-unordered)"
+            },
+            {
+                "command": "mageforge.theme.inspector",
+                "title": "Theme: Inspector",
+                "category": "MageForge",
+                "icon": "$(search)"
+            },
+            {
+                "command": "mageforge.hyva.tokens",
+                "title": "Hyvä: Tokens",
+                "category": "MageForge",
+                "icon": "$(symbol-color)"
+            },
+            {
+                "command": "mageforge.hyva.compatibilityCheck",
+                "title": "Hyvä: Compatibility Check",
+                "category": "MageForge",
+                "icon": "$(checklist)"
+            },
+            {
+                "command": "mageforge.template.override",
+                "title": "Template: Override",
+                "category": "MageForge",
+                "icon": "$(copy)"
+            },
+            {
+                "command": "mageforge.dependencies.update",
+                "title": "Dependencies: Update",
+                "category": "MageForge",
+                "icon": "$(cloud-download)"
+            },
+            {
+                "command": "mageforge.system.check",
+                "title": "System: Check",
+                "category": "MageForge",
+                "icon": "$(pulse)"
+            },
+            {
+                "command": "mageforge.system.version",
+                "title": "System: Version",
+                "category": "MageForge",
+                "icon": "$(info)"
+            },
+            {
+                "command": "mageforge.refreshThemes",
+                "title": "Refresh Themes",
+                "category": "MageForge",
+                "icon": "$(refresh)"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "mageforge.refreshThemes",
+                    "when": "false"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "submenu": "mageforge.explorer",
+                    "group": "mageforge",
+                    "when": "explorerResourceIsFolder"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "mageforge.refreshThemes",
+                    "when": "view == mageforge.themes",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "mageforge.theme.build",
+                    "when": "view == mageforge.themes && viewItem == mageforgeTheme",
+                    "group": "mageforge@1"
+                },
+                {
+                    "command": "mageforge.theme.watch",
+                    "when": "view == mageforge.themes && viewItem == mageforgeTheme",
+                    "group": "mageforge@2"
+                },
+                {
+                    "command": "mageforge.theme.clean",
+                    "when": "view == mageforge.themes && viewItem == mageforgeTheme",
+                    "group": "mageforge@3"
+                }
+            ]
+        },
+        "submenus": [
+            {
+                "id": "mageforge.explorer",
+                "label": "MageForge",
+                "icon": "$(zap)"
+            }
+        ]
+    },
     "scripts": {
         "vscode:prepublish": "npm run package",
         "compile": "npm run check-types && npm run lint && node esbuild.js",
