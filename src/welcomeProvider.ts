@@ -192,6 +192,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             --gap: 16px;
             --radius: 6px;
             --accent: #f26322;
+            --accent-glow: color-mix(in srgb, #f26322 35%, transparent);
         }
         * {
             box-sizing: border-box;
@@ -203,12 +204,16 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             font-size: var(--vscode-font-size);
             line-height: 1.5;
             color: var(--vscode-foreground);
+            background: var(--vscode-sideBar-background);
         }
 
         /* ── Hero ─────────────────────────────── */
         .hero {
+            position: relative;
             padding: 20px 16px 4px;
             text-align: center;
+            background:
+                radial-gradient(ellipse 100% 80% at 50% 0%, var(--accent-glow), transparent 60%);
         }
         .logo {
             display: inline-block;
