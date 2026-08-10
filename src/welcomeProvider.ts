@@ -15,7 +15,9 @@ const QUICK_ACTIONS: QuickAction[] = [
 ];
 
 const DOCS_URL = 'https://github.com/OpenForgeProject/mageforge/blob/main/docs/';
-const ISSUES_URL = 'https://github.com/OpenForgeProject/mageforge/issues';
+const CHANGELOG_URL = 'https://github.com/OpenForgeProject/mageforge-vscode/blob/main/CHANGELOG.md';
+const MAGEFORGE_ISSUES_URL = 'https://github.com/OpenForgeProject/mageforge/issues';
+const EXTENSION_ISSUES_URL = 'https://github.com/OpenForgeProject/mageforge-vscode/issues';
 const WEBSITE_URL = 'https://github.com/OpenForgeProject/mageforge';
 
 /**
@@ -284,7 +286,9 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         <h2>Resources</h2>
         <div class="links">
             <a href="${DOCS_URL}">Documentation</a>
-            <a href="${ISSUES_URL}">Report an Issue</a>
+            <a href="${CHANGELOG_URL}">Changelog</a>
+            <a href="${EXTENSION_ISSUES_URL}">Report Extension Issue</a>
+            <a href="${MAGEFORGE_ISSUES_URL}">Report MageForge Issue</a>
             <a href="${WEBSITE_URL}">MageForge on GitHub</a>
         </div>
     </div>
