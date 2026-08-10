@@ -2,6 +2,11 @@
 
 ![MageForge Hero](./.github/assets/MageForge-Header.png)
 
+![CI](https://github.com/OpenForgeProject/mageforge-vscode/actions/workflows/ci.yml/badge.svg)
+![Release Please](https://github.com/OpenForgeProject/mageforge-vscode/actions/workflows/release-please.yml/badge.svg)
+[![Version](https://img.shields.io/visual-studio-marketplace/v/OpenForgeProject.mageforge)](https://marketplace.visualstudio.com/items?itemName=OpenForgeProject.mageforge)
+[![License](https://img.shields.io/github/license/OpenForgeProject/mageforge-vscode)](./LICENSE)
+
 The official VS Code integration for [MageForge](https://github.com/OpenForgeProject/mageforge).
 
 ## Features
