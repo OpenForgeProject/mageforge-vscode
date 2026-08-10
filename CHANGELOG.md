@@ -1,6 +1,7 @@
 # Change Log
 
-All notable changes to the "mageforge" extension will be documented in this file.
+All changes to the MageForge extension will be documented here.
+If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
 ## [0.2.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.1.0...v0.2.0) (2026-08-10)
 

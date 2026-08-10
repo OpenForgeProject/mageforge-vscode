@@ -171,6 +171,12 @@
                 "title": "Override File…",
                 "category": "MageForge",
                 "icon": "$(copy)"
+            },
+            {
+                "command": "mageforge.showChangelog",
+                "title": "Show Changelog",
+                "category": "MageForge",
+                "icon": "$(notebook-open-as-text)"
             }
         ],
         "menus": {

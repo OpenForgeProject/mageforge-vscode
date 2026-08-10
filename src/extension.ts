@@ -2,11 +2,13 @@ import * as vscode from 'vscode';
 import { CommandsProvider, MAGEFORGE_COMMANDS, MageforgeCommand } from './commandsProvider';
 import { ThemeTreeItem, ThemesProvider } from './themesProvider';
 import { WelcomeViewProvider } from './welcomeProvider';
+import { ChangelogViewProvider } from './changelogProvider';
 import { buildCommandLine, getMagentoRoot, runInTerminal } from './magento';
 
 export function activate(context: vscode.ExtensionContext) {
     const commandsProvider = new CommandsProvider();
     const themesProvider = new ThemesProvider();
+    const changelogProvider = new ChangelogViewProvider(context.extensionUri);
 
     // Show menu entries immediately - the extension handles missing Magento gracefully.
     void vscode.commands.executeCommand('setContext', 'mageforge.active', true);
@@ -19,6 +21,9 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerTreeDataProvider('mageforge.commands', commandsProvider),
         vscode.window.registerTreeDataProvider('mageforge.themes', themesProvider),
     );
+
+    // Notify the user and open the changelog after the extension was updated.
+    void showUpdateNotificationIfNeeded(context, changelogProvider);
 
     // Register one VS Code command per MageForge CLI command.
     for (const cmd of MAGEFORGE_COMMANDS) {
@@ -37,7 +42,36 @@ export function activate(context: vscode.ExtensionContext) {
                 await overrideFile(uri, themesProvider);
             },
         ),
+        vscode.commands.registerCommand('mageforge.showChangelog', () => {
+            changelogProvider.show(context.extension.packageJSON.version);
+        }),
     );
+}
+
+/**
+ * Shows an update notification and opens the changelog tab when the extension
+ * version has changed since the last activation.
+ */
+async function showUpdateNotificationIfNeeded(
+    context: vscode.ExtensionContext,
+    changelogProvider: ChangelogViewProvider,
+): Promise<void> {
+    const currentVersion = context.extension.packageJSON.version as string;
+    const lastVersion = context.globalState.get<string>('mageforge.lastSeenVersion');
+
+    if (lastVersion && lastVersion !== currentVersion) {
+        changelogProvider.show(`v${currentVersion}`);
+        const selection = await vscode.window.showInformationMessage(
+            `MageForge has been updated to v${currentVersion}.`,
+            'Open Changelog',
+            'Dismiss',
+        );
+        if (selection === 'Open Changelog') {
+            changelogProvider.show(`v${currentVersion}`);
+        }
+    }
+
+    await context.globalState.update('mageforge.lastSeenVersion', currentVersion);
 }
 
 /**
@@ -119,3 +153,4 @@ async function runMageforgeCommand(
 }
 
 export function deactivate() {}
+
