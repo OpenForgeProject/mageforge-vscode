@@ -3,6 +3,11 @@
     "displayName": "MageForge",
     "description": "The official VS Code integration for the MageForge",
     "version": "0.1.0",
+    "publisher": "OpenForgeProject",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/OpenForgeProject/mageforge-vscode"
+    },
     "engines": {
         "vscode": "^1.125.0",
         "node": ">=24"
