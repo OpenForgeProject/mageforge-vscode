@@ -3,6 +3,20 @@
 All changes to the MageForge extension will be documented here.
 If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
+## [0.4.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.3.0...v0.4.0) (2026-08-10)
+
+
+### Features
+
+* add version check and update notification in welcome view ([59a296c](https://github.com/OpenForgeProject/mageforge-vscode/commit/59a296c38312911777cb6628a2e133749cc44da8))
+
+
+### Bug Fixes
+
+* enhance changelog styling ([ce0a940](https://github.com/OpenForgeProject/mageforge-vscode/commit/ce0a9402f71bdd68bf35f88384a20b0eb5131e24))
+* enhance welcome view styling with accent glow ([2cc12c9](https://github.com/OpenForgeProject/mageforge-vscode/commit/2cc12c90aadddefc91c317206a030644fe891c07))
+* update README to include CI, Release, Version, and License badges ([46c1c9a](https://github.com/OpenForgeProject/mageforge-vscode/commit/46c1c9a73dd641d27d35aa796638d6ce218fb1b4))
+
 ## [0.3.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.2.0...v0.3.0) (2026-08-10)
 
 

@@ -2,7 +2,7 @@
     "name": "mageforge",
     "displayName": "MageForge",
     "description": "The official VS Code integration for the MageForge",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "publisher": "OpenForgeProject",
     "icon": "resources/assets/logo.png",
     "repository": {
