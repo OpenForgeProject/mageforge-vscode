@@ -52,9 +52,12 @@ export function buildCommandLine(
 
 /**
  * Run a MageForge CLI command in a dedicated terminal.
+ * Reuses an existing terminal with the same name so the command is not
+ * executed multiple times across several newly created terminals.
  */
 export function runInTerminal(name: string, commandLine: string, cwd: string): void {
-    const terminal = vscode.window.createTerminal({ name, cwd });
+    const existing = vscode.window.terminals.find((t) => t.name === name);
+    const terminal = existing ?? vscode.window.createTerminal({ name, cwd });
     terminal.show();
     terminal.sendText(commandLine);
 }
