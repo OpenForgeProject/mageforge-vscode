@@ -4,7 +4,8 @@
     "description": "The official VS Code integration for the MageForge",
     "version": "0.1.0",
     "engines": {
-        "vscode": "^1.125.0"
+        "vscode": "^1.125.0",
+        "node": ">=24"
     },
     "categories": [
         "Other"
@@ -35,7 +36,7 @@
     },
     "devDependencies": {
         "@types/mocha": "^10.0.10",
-        "@types/node": "20.x",
+        "@types/node": "^24.13.3",
         "@types/vscode": "^1.125.0",
         "@typescript-eslint/eslint-plugin": "^8.17.0",
         "@typescript-eslint/parser": "^8.17.0",
