@@ -23,8 +23,6 @@ All notable changes to the "mageforge" extension will be documented in this file
 * add pre-commit hook with lint-staged ([631cf33](https://github.com/OpenForgeProject/mageforge-vscode/commit/631cf331ed41cf45097fec833c2ce63c4ebb1578))
 * update Node.js version requirements and enhance README with development setup instructions ([a2b5102](https://github.com/OpenForgeProject/mageforge-vscode/commit/a2b5102c7901265dbc4e69cd6d222a7c5dbe3a24))
 
-## [Unreleased]
-
 ## [0.1.0] - 2026-08-10
 
 - Initial release
