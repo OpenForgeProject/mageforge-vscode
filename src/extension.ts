@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { CommandsProvider, MAGEFORGE_COMMANDS, MageforgeCommand } from './commandsProvider';
 import { ThemeTreeItem, ThemesProvider } from './themesProvider';
+import { WelcomeViewProvider } from './welcomeProvider';
 import { buildCommandLine, getMagentoRoot, runInTerminal } from './magento';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -8,6 +9,10 @@ export function activate(context: vscode.ExtensionContext) {
     const themesProvider = new ThemesProvider();
 
     context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            WelcomeViewProvider.viewType,
+            new WelcomeViewProvider(context.extensionUri),
+        ),
         vscode.window.registerTreeDataProvider('mageforge.commands', commandsProvider),
         vscode.window.registerTreeDataProvider('mageforge.themes', themesProvider),
     );

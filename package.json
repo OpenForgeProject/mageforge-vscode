@@ -52,6 +52,13 @@
         "views": {
             "mageforge": [
                 {
+                    "type": "webview",
+                    "id": "mageforge.welcome",
+                    "name": "Welcome to MageForge",
+                    "contextualTitle": "MageForge for Magento",
+                    "icon": "resources/assets/MageForge-Logo.svg"
+                },
+                {
                     "id": "mageforge.commands",
                     "name": "Commands",
                     "icon": "resources/assets/MageForge-Logo.svg",
