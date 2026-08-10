@@ -1,17 +1,31 @@
 import * as vscode from 'vscode';
 import { getMagentoRoot, useDdev } from './magento';
+import { execFile } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 interface QuickAction {
     label: string;
-    command: string;
+    command?: string;
+    url?: string;
     icon: string;
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-    { label: 'Build Theme', command: 'mageforge.theme.build', icon: 'tools' },
+    { label: 'Build Theme', command: 'mageforge.theme.build', icon: 'hammer' },
     { label: 'Watch Theme', command: 'mageforge.theme.watch', icon: 'eye' },
-    { label: 'System Check', command: 'mageforge.system.check', icon: 'pulse' },
-    { label: 'Hyvä Tokens', command: 'mageforge.hyva.tokens', icon: 'symbol-color' },
+    { label: 'Inspector', command: 'mageforge.theme.inspector', icon: 'search' },
+    { label: 'Hyvä Check', command: 'mageforge.hyva.compatibilityCheck', icon: 'checklist' },
+    {
+        label: 'Feature Request',
+        url: 'https://github.com/OpenForgeProject/mageforge-vscode/issues/new?template=feature_request.md',
+        icon: 'bulb',
+    },
+    {
+        label: 'Rate',
+        url: 'https://marketplace.visualstudio.com/items?itemName=OpenForgeProject.mageforge&ssr=false#review-details',
+        icon: 'star',
+    },
 ];
 
 const DOCS_URL = 'https://github.com/OpenForgeProject/mageforge/blob/main/docs/';
@@ -29,19 +43,101 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
 
     constructor(private readonly extensionUri: vscode.Uri) {}
 
-    resolveWebviewView(webviewView: vscode.WebviewView): void {
+    async resolveWebviewView(webviewView: vscode.WebviewView): Promise<void> {
         webviewView.webview.options = {
             enableScripts: true,
             localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'resources', 'assets')],
         };
 
-        webviewView.webview.onDidReceiveMessage((message: { command?: string }) => {
-            if (message.command) {
-                void vscode.commands.executeCommand(message.command);
-            }
-        });
+        webviewView.webview.onDidReceiveMessage(
+            (message: { command?: string; url?: string; type?: string }) => {
+                if (message.url) {
+                    void vscode.env.openExternal(vscode.Uri.parse(message.url));
+                } else if (message.command) {
+                    void vscode.commands.executeCommand(message.command);
+                }
+            },
+        );
 
         webviewView.webview.html = this.getHtml(webviewView.webview);
+        await this.sendVersionInfo(webviewView.webview);
+    }
+
+    private async sendVersionInfo(webview: vscode.Webview): Promise<void> {
+        const magentoRoot = getMagentoRoot();
+        if (!magentoRoot) {
+            return;
+        }
+
+        const installedVersion = await this.getMageforgeVersion(magentoRoot);
+        const isDev = installedVersion?.startsWith('dev-') ?? false;
+        const latestVersion = isDev ? undefined : await this.getLatestMageforgeVersion();
+        const outdated =
+            !isDev && installedVersion && latestVersion
+                ? this.isOutdated(installedVersion, latestVersion)
+                : false;
+
+        void webview.postMessage({
+            type: 'versionInfo',
+            mageforge: installedVersion,
+            outdated,
+            isDev,
+        });
+    }
+
+    private async getMageforgeVersion(magentoRoot: string): Promise<string | undefined> {
+        // Read the installed package version from composer metadata - more reliable
+        // than spawning `composer show`, which may not be on the extension host PATH.
+        const installedJson = path.join(magentoRoot, 'vendor', 'composer', 'installed.json');
+        try {
+            const raw = await fs.promises.readFile(installedJson, 'utf8');
+            const data = JSON.parse(raw) as {
+                packages?: { name: string; version: string }[];
+            };
+            const pkg = data.packages?.find((p) => p.name === 'openforgeproject/mageforge');
+            return pkg?.version;
+        } catch {
+            return undefined;
+        }
+    }
+
+    private async getLatestMageforgeVersion(): Promise<string | undefined> {
+        return new Promise((resolve) => {
+            execFile(
+                'curl',
+                [
+                    '-s',
+                    '--max-time',
+                    '3',
+                    'https://api.github.com/repos/OpenForgeProject/mageforge/releases/latest',
+                ],
+                (error, stdout) => {
+                    if (error) {
+                        resolve(undefined);
+                        return;
+                    }
+                    try {
+                        const data = JSON.parse(stdout) as { tag_name?: string };
+                        resolve(data.tag_name?.replace(/^v/, ''));
+                    } catch {
+                        resolve(undefined);
+                    }
+                },
+            );
+        });
+    }
+
+    private isOutdated(installed: string, latest: string): boolean {
+        const parse = (v: string) => v.split('.').map((n) => parseInt(n, 10) || 0);
+        const [iMajor, iMinor, iPatch] = parse(installed);
+        const [lMajor, lMinor, lPatch] = parse(latest);
+        if (lMajor !== iMajor) {
+            return lMajor > iMajor;
+        }
+        if (lMinor !== iMinor) {
+            return lMinor > iMinor;
+        }
+        return lPatch > iPatch;
     }
 
     private getHtml(webview: vscode.Webview): string {
@@ -66,10 +162,9 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
 
         const actionButtons = QUICK_ACTIONS.map(
             (action) => `
-            <button class="action" data-command="${action.command}">
-                <span class="codicon codicon-${action.icon}"></span>
+            <button class="action" ${action.command ? `data-command="${action.command}"` : ''} ${action.url ? `data-url="${action.url}"` : ''} title="${action.label}">
+                <i class="ti ti-${action.icon}"></i>
                 <span>${action.label}</span>
-                <span class="codicon codicon-chevron-right chevron"></span>
             </button>`,
         ).join('');
 
@@ -78,8 +173,9 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
+          content="default-src 'none'; img-src ${webview.cspSource} https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://cdn.jsdelivr.net; font-src https://cdn.jsdelivr.net; script-src 'nonce-${nonce}';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     <style>
         :root {
             --gap: 16px;
@@ -150,6 +246,37 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             background: color-mix(in srgb, #8957e5 25%, transparent);
             color: var(--vscode-charts-purple, #b180d7);
         }
+        .badge-version {
+            background: color-mix(in srgb, #28a745 20%, transparent);
+            color: #28a745;
+        }
+        .badge-version.outdated {
+            background: color-mix(in srgb, #e51400 20%, transparent);
+            color: #e51400;
+        }
+        .badge-version.dev {
+            background: color-mix(in srgb, #e8a838 20%, transparent);
+            color: #e8a838;
+        }
+        .badge-version.hidden {
+            display: none;
+        }
+        .badge-version.loading {
+            background: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+        }
+        .badge-version.loading::after {
+            content: '';
+            width: 12px;
+            height: 12px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
         /* ── Sections ─────────────────────────── */
         .section {
@@ -177,48 +304,61 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
 
         /* ── Quick actions ────────────────────── */
         .actions {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 10px;
         }
         .action {
             position: relative;
             display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--vscode-panel-border, transparent);
-            border-radius: var(--radius);
+            padding: 18px 10px;
+            border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.15));
+            border-radius: 8px;
             cursor: pointer;
-            text-align: left;
+            text-align: center;
             font-family: inherit;
-            font-size: 12.5px;
+            font-size: 12px;
             font-weight: 500;
-            background: var(--vscode-sideBarSectionHeader-background, rgba(128, 128, 128, 0.06));
+            background: var(--vscode-sideBarSectionHeader-background, rgba(128, 128, 128, 0.04));
             color: var(--vscode-foreground);
-            transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+        .action::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
         }
         .action:hover {
             border-color: var(--accent);
-            background: color-mix(in srgb, var(--accent) 10%, transparent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 25%, transparent);
+        }
+        .action:hover::before {
+            opacity: 0.08;
         }
         .action:active {
-            transform: scale(0.985);
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 4px color-mix(in srgb, var(--accent) 15%, transparent);
         }
-        .action .codicon {
-            font-size: 14px;
+        .action .ti {
+            font-size: 24px;
             color: var(--accent);
+            transition: transform 0.2s ease;
         }
-        .action .chevron {
-            margin-left: auto;
-            opacity: 0;
-            transition: opacity 0.15s ease, transform 0.15s ease;
-            transform: translateX(-4px);
+        .action:hover .ti {
+            transform: scale(1.1);
         }
-        .action:hover .chevron {
-            opacity: 0.6;
-            transform: translateX(0);
+        .action span {
+            position: relative;
+            z-index: 1;
         }
 
         /* ── Resources ────────────────────────── */
@@ -266,7 +406,14 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         <img id="logo-light" class="logo hidden" src="${sloganLightUri}" alt="MageForge">
         <img id="logo-dark" class="logo hidden" src="${sloganDarkUri}" alt="MageForge">
         <p class="tagline">Frontend workflow automation for Magento 2</p>
-        ${magentoRoot ? `<div class="status">${ddevBadge}</div>` : ''}
+        ${
+            magentoRoot
+                ? `<div class="status">
+                    ${ddevBadge}
+                    <span id="badge-version" class="badge badge-version loading"></span>
+                </div>`
+                : ''
+        }
     </div>
 
     ${
@@ -316,8 +463,37 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
 
         document.querySelectorAll('.action').forEach((button) => {
             button.addEventListener('click', () => {
-                vscode.postMessage({ command: button.dataset.command });
+                if (button.dataset.url) {
+                    vscode.postMessage({ url: button.dataset.url });
+                } else if (button.dataset.command) {
+                    vscode.postMessage({ command: button.dataset.command });
+                }
             });
+        });
+
+        // Handle version info from extension
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (data.type === 'versionInfo') {
+                const versionBadge = document.getElementById('badge-version');
+                versionBadge.classList.remove('loading');
+                if (data.mageforge) {
+                    let text = 'MageForge CLI v' + data.mageforge;
+                    if (data.isDev) {
+                        text += ' (dev)';
+                        versionBadge.classList.add('dev');
+                    } else if (data.outdated) {
+                        text += ' (outdated)';
+                        versionBadge.classList.add('outdated');
+                        versionBadge.title = 'Update available: v' + data.mageforge + ' → latest';
+                    } else {
+                        text += ' (latest)';
+                    }
+                    versionBadge.textContent = text;
+                } else {
+                    versionBadge.classList.add('hidden');
+                }
+            }
         });
     </script>
 </body>
