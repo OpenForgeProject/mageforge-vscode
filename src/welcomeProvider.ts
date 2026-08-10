@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getMagentoRoot, useDdev } from './magento';
+import { getMagentoRoot, getExecutionEnvironment } from './magento';
 import { execFile } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -140,6 +140,19 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         return lPatch > iPatch;
     }
 
+    private getEnvironmentBadge(env: string): string {
+        switch (env) {
+            case 'ddev':
+                return '<span class="badge badge-ddev">DDEV</span>';
+            case 'docker-compose':
+                return '<span class="badge badge-docker">Docker</span>';
+            case 'lando':
+                return '<span class="badge badge-lando">Lando</span>';
+            default:
+                return '<span class="badge">Local PHP</span>';
+        }
+    }
+
     private getHtml(webview: vscode.Webview): string {
         const sloganLightUri = webview.asWebviewUri(
             vscode.Uri.joinPath(
@@ -155,10 +168,8 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         const nonce = getNonce();
 
         const magentoRoot = getMagentoRoot();
-        const ddev = magentoRoot ? useDdev(magentoRoot) : false;
-        const ddevBadge = ddev
-            ? '<span class="badge badge-ddev">DDEV</span>'
-            : '<span class="badge">local PHP</span>';
+        const env = magentoRoot ? getExecutionEnvironment(magentoRoot) : 'local';
+        const envBadge = this.getEnvironmentBadge(env);
 
         const actionButtons = QUICK_ACTIONS.map(
             (action) => `
@@ -409,7 +420,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         ${
             magentoRoot
                 ? `<div class="status">
-                    ${ddevBadge}
+                    ${envBadge}
                     <span id="badge-version" class="badge badge-version loading"></span>
                 </div>`
                 : ''

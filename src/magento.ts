@@ -16,19 +16,44 @@ export function getMagentoRoot(): string | undefined {
     return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 }
 
+type ExecutionEnvironment = 'ddev' | 'docker-compose' | 'lando' | 'local';
+
 /**
- * Whether commands should run inside DDEV.
- * Auto-detected via a .ddev directory, can be forced on/off via setting.
+ * Detect the execution environment for PHP commands.
+ * Uses explicit `phpExecution` setting or auto-detects from project files.
  */
-export function useDdev(magentoRoot: string): boolean {
-    const setting = vscode.workspace.getConfiguration('mageforge').get<string>('useDdev', 'auto');
-    if (setting === 'always') {
-        return true;
+export function getExecutionEnvironment(magentoRoot: string): ExecutionEnvironment {
+    const config = vscode.workspace.getConfiguration('mageforge');
+    const execution = config.get<string>('phpExecution', 'auto');
+
+    // Explicit setting takes precedence
+    if (execution !== 'auto') {
+        return execution as ExecutionEnvironment;
     }
-    if (setting === 'never') {
-        return false;
+
+    // Auto-detect
+    if (fs.existsSync(path.join(magentoRoot, '.ddev'))) {
+        return 'ddev';
     }
-    return fs.existsSync(path.join(magentoRoot, '.ddev'));
+    if (
+        fs.existsSync(path.join(magentoRoot, 'docker-compose.yml')) ||
+        fs.existsSync(path.join(magentoRoot, 'docker-compose.yaml'))
+    ) {
+        return 'docker-compose';
+    }
+    if (fs.existsSync(path.join(magentoRoot, '.lando.yml'))) {
+        return 'lando';
+    }
+    return 'local';
+}
+
+/**
+ * Get the Docker Compose service name for PHP commands.
+ */
+export function getDockerComposeService(): string {
+    return vscode.workspace
+        .getConfiguration('mageforge')
+        .get<string>('dockerComposeService', 'php');
 }
 
 /**
@@ -43,11 +68,21 @@ export function buildCommandLine(
         .getConfiguration('mageforge')
         .get<string>('phpBinary', 'php');
     const command = ['bin/magento', mageforgeCommand, ...args].join(' ');
+    const env = getExecutionEnvironment(magentoRoot);
 
-    if (useDdev(magentoRoot)) {
-        return `ddev php ${command}`;
+    switch (env) {
+        case 'ddev':
+            return `ddev php ${command}`;
+        case 'docker-compose': {
+            const service = getDockerComposeService();
+            return `docker-compose exec ${service} ${command}`;
+        }
+        case 'lando':
+            return `lando php ${command}`;
+        default:
+            // phpBinary can be a full command like "docker-compose exec php" or just "php"
+            return `${phpBinary} ${command}`;
     }
-    return `${phpBinary} ${command}`;
 }
 
 /**
@@ -74,13 +109,35 @@ export function execMageforge(
     const phpBinary = vscode.workspace
         .getConfiguration('mageforge')
         .get<string>('phpBinary', 'php');
-    const ddev = useDdev(magentoRoot);
 
     const baseArgs = ['bin/magento', mageforgeCommand, ...args];
 
     return new Promise((resolve, reject) => {
-        const file = ddev ? 'ddev' : phpBinary;
-        const finalArgs = ddev ? ['php', ...baseArgs] : baseArgs;
+        const env = getExecutionEnvironment(magentoRoot);
+        let file: string;
+        let finalArgs: string[];
+
+        switch (env) {
+            case 'ddev':
+                file = 'ddev';
+                finalArgs = ['php', ...baseArgs];
+                break;
+            case 'docker-compose': {
+                const service = getDockerComposeService();
+                file = 'docker-compose';
+                finalArgs = ['exec', service, ...baseArgs];
+                break;
+            }
+            case 'lando':
+                file = 'lando';
+                finalArgs = ['php', ...baseArgs];
+                break;
+            default:
+                // phpBinary may be a full command like "docker-compose exec php"
+                const parts = phpBinary.split(/\s+/);
+                file = parts[0];
+                finalArgs = [...parts.slice(1), ...baseArgs];
+        }
 
         execFile(
             file,

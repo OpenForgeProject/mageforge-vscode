@@ -30,11 +30,12 @@ MageForge adds a dedicated **MageForge** activity bar to VS Code that surfaces t
 
 The extension contributes the following settings under the `mageforge.` prefix:
 
-| Setting                     | Default  | Description                                                                                         |
-| --------------------------- | -------- | --------------------------------------------------------------------------------------------------- |
-| `mageforge.magentoRootPath` | `""`     | Path to the Magento root directory (contains `bin/magento`). Defaults to the workspace folder.      |
-| `mageforge.phpBinary`       | `"php"`  | PHP binary used to run `bin/magento` (e.g. `php` or `ddev php`).                                    |
-| `mageforge.useDdev`         | `"auto"` | Run commands inside DDEV (`ddev php bin/magento ...`). `auto` detects DDEV via a `.ddev` directory. |
+| Setting                          | Default  | Description                                                                                    |
+| -------------------------------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `mageforge.magentoRootPath`      | `""`     | Path to the Magento root directory (contains `bin/magento`). Defaults to the workspace folder. |
+| `mageforge.phpExecution`         | `"auto"` | How to execute PHP commands: `auto`, `ddev`, `docker-compose`, `lando`, or `local`.            |
+| `mageforge.dockerComposeService` | `"php"`  | Docker Compose service name for PHP commands.                                                  |
+| `mageforge.phpBinary`            | `"php"`  | PHP binary for local execution. Can be a full command for custom setups.                       |
 
 ## Development
 

@@ -32,22 +32,33 @@
                 "mageforge.magentoRootPath": {
                     "type": "string",
                     "default": "",
-                    "description": "Path to the Magento root directory (contains bin/magento). Defaults to the workspace folder."
+                    "description": "Path to the Magento root directory (contains bin/magento). Defaults to the workspace folder.",
+                    "order": 1
+                },
+                "mageforge.phpExecution": {
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "ddev",
+                        "docker-compose",
+                        "lando",
+                        "local"
+                    ],
+                    "default": "auto",
+                    "markdownDescription": "How to execute PHP commands. `auto` detects the environment from project files (`.ddev`, `docker-compose.yml`, `.lando.yml`).",
+                    "order": 2
+                },
+                "mageforge.dockerComposeService": {
+                    "type": "string",
+                    "default": "php",
+                    "description": "Docker Compose service name for PHP commands. Only used when `phpExecution` is `docker-compose`.",
+                    "order": 3
                 },
                 "mageforge.phpBinary": {
                     "type": "string",
                     "default": "php",
-                    "description": "PHP binary used to run bin/magento (e.g. 'php' or 'ddev php')."
-                },
-                "mageforge.useDdev": {
-                    "type": "string",
-                    "enum": [
-                        "auto",
-                        "always",
-                        "never"
-                    ],
-                    "default": "auto",
-                    "markdownDescription": "Run commands inside DDEV (`ddev php bin/magento ...`). `auto` detects DDEV via a `.ddev` directory in the Magento root."
+                    "description": "PHP binary for local execution. Can be a full command like `docker-compose exec php` for custom setups.",
+                    "order": 4
                 }
             }
         },
