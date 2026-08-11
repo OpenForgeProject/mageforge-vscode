@@ -453,7 +453,9 @@ export class ChangelogViewProvider {
             const body = this.wrapListItems(this.replaceCategoryHeaders(rest));
 
             const latestBadge = index === 0 ? '<span class="release-latest">Latest</span>' : '';
-            const heading = compareUrl ? `<a href="${compareUrl}">${version}</a>` : version;
+            const heading = compareUrl
+                ? `<a href="${this.escapeHtmlAttribute(compareUrl)}">${version}</a>`
+                : version;
 
             const releaseHeader = `<header class="release-header">${latestBadge}<h2 class="release-heading">${heading}</h2></header>`;
             releases.push(`<article class="release">${releaseHeader}${body}</article>`);
@@ -491,6 +493,10 @@ export class ChangelogViewProvider {
 
     private escapeHtml(text: string): string {
         return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    private escapeHtmlAttribute(text: string): string {
+        return this.escapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     private categoryHeader(title: string, cssClass: string, icon: string): string {
