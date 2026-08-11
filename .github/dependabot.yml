@@ -1,0 +1,71 @@
+version: 2
+updates:
+    - package-ecosystem: npm
+      directory: /
+      schedule:
+          interval: weekly
+          day: monday
+          time: '08:00'
+      open-pull-requests-limit: 10
+      versioning-strategy: increase-if-necessary
+      # Cooldown: security updates and patches are allowed immediately,
+      # but minor/major updates for runtime dependencies should wait 7 days
+      # to avoid upgrading to a freshly released, potentially buggy version.
+      groups:
+          dev-dependencies:
+              dependency-type: development
+              update-types:
+                  - minor
+                  - patch
+          eslint:
+              patterns:
+                  - 'eslint'
+                  - 'eslint-*'
+                  - '@typescript-eslint/*'
+                  - 'eslint-config-prettier'
+          prettier:
+              patterns:
+                  - 'prettier'
+          esbuild:
+              patterns:
+                  - 'esbuild'
+          vscode-test:
+              patterns:
+                  - '@vscode/test-*'
+          types:
+              patterns:
+                  - '@types/*'
+      ignore:
+          # Wait 7 days before proposing a new major version to let early
+          # adopters surface breaking changes.
+          - dependency-name: '*'
+            update-types:
+                - version-update:semver-major
+      labels:
+          - dependencies
+          - javascript
+      commit-message:
+          prefix: chore
+          include: scope
+      reviewers:
+          - OpenForgeProject/mageforge-vscode
+
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+          interval: weekly
+          day: monday
+          time: '08:00'
+      open-pull-requests-limit: 5
+      groups:
+          github-actions:
+              patterns:
+                  - '*'
+      labels:
+          - dependencies
+          - github-actions
+      commit-message:
+          prefix: ci
+          include: scope
+      reviewers:
+          - OpenForgeProject/mageforge-vscode
