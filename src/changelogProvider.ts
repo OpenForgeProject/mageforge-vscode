@@ -461,11 +461,16 @@ export class ChangelogViewProvider {
             releases.push(`<article class="release">${releaseHeader}${body}</article>`);
         });
 
+        const visibleReleases = releases.slice(0, 10);
         const releasesHtml =
-            releases.length > 0
-                ? releases.join('\n')
+            visibleReleases.length > 0
+                ? visibleReleases.join('\n')
                 : `<div class="empty-state">No release notes available.</div>`;
-        let output = `${introHtml}${releasesHtml}`;
+        const fullChangelogButton =
+            releases.length > 10
+                ? `<div class="actions"><button class="btn" data-url="${CHANGELOG_URL}"><i class="ti ti-brand-github"></i> see full changelog</button></div>`
+                : '';
+        let output = `${introHtml}${releasesHtml}${fullChangelogButton}`;
 
         // Restore fenced code blocks
         codeBlocks.forEach((block, index) => {
