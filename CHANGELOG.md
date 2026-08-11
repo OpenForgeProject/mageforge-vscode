@@ -3,6 +3,23 @@
 All changes to the MageForge extension will be documented here.
 If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
+## [0.6.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.5.0...v0.6.0) (2026-08-11)
+
+
+### Features
+
+* add timeout handling for version checks in WelcomeViewProvider ([32c49ba](https://github.com/OpenForgeProject/mageforge-vscode/commit/32c49bafa3ed98d388361154d6732d3c2530c023))
+
+
+### Bug Fixes
+
+* MageForge version badge and update Button on VS Code Focus change ([30cb97f](https://github.com/OpenForgeProject/mageforge-vscode/commit/30cb97f47503378c6adc88f9f8a9048b180a96a3))
+
+
+### Maintenance
+
+* remove vsc-extension-quickstart.md file ([7cd4c1a](https://github.com/OpenForgeProject/mageforge-vscode/commit/7cd4c1a22e2343c77f42ec1b9ab2146a8c715597))
+
 ## [0.5.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.4.0...v0.5.0) (2026-08-11)
 
 
