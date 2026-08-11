@@ -69,13 +69,24 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             return;
         }
 
-        const installedVersion = await this.getMageforgeVersion(magentoRoot);
-        const isDev = installedVersion?.startsWith('dev-') ?? false;
-        const latestVersion = isDev ? undefined : await this.getLatestMageforgeVersion();
-        const outdated =
-            !isDev && installedVersion && latestVersion
-                ? this.isOutdated(installedVersion, latestVersion)
-                : false;
+        let installedVersion: string | undefined;
+        let isDev = false;
+        let latestVersion: string | undefined;
+        let outdated = false;
+
+        try {
+            installedVersion = await this.withTimeout(this.getMageforgeVersion(magentoRoot), 2000);
+            isDev = installedVersion?.startsWith('dev-') ?? false;
+            latestVersion = isDev
+                ? undefined
+                : await this.withTimeout(this.getLatestMageforgeVersion(), 5000);
+            outdated =
+                !isDev && installedVersion && latestVersion
+                    ? this.isOutdated(installedVersion, latestVersion)
+                    : false;
+        } catch {
+            // Ignore failures from individual version checks; the UI is updated below.
+        }
 
         void webview.postMessage({
             type: 'versionInfo',
@@ -83,6 +94,26 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             latest: latestVersion,
             outdated,
             isDev,
+        });
+    }
+
+    /**
+     * Race a promise against a timeout. Resolves with `undefined` when the
+     * timeout expires or the promise rejects, so the caller can always fall
+     * back to a degraded UI state instead of hanging forever.
+     */
+    private withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => resolve(undefined), ms);
+            promise
+                .then((value) => {
+                    clearTimeout(timer);
+                    resolve(value);
+                })
+                .catch(() => {
+                    clearTimeout(timer);
+                    resolve(undefined);
+                });
         });
     }
 
