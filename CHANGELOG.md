@@ -3,6 +3,13 @@
 All changes to the MageForge extension will be documented here.
 If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
+## [0.6.1](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.6.0...v0.6.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* format import statements and improve message formatting in activate function ([a7b6c61](https://github.com/OpenForgeProject/mageforge-vscode/commit/a7b6c616d5ebdaecd68ca1bf6f6d5ece5dbc27f6))
+
 ## [0.6.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.5.0...v0.6.0) (2026-08-11)
 
 
