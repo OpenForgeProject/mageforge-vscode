@@ -3,6 +3,25 @@
 All changes to the MageForge extension will be documented here.
 If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
+## [0.5.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.4.0...v0.5.0) (2026-08-11)
+
+
+### Features
+
+* add dependabot configuration for npm and GitHub Actions updates ([6f38f3a](https://github.com/OpenForgeProject/mageforge-vscode/commit/6f38f3ad94f92ffc42a9d433860bfba685f08308))
+* add security policy documentation for MageForge ([954c1af](https://github.com/OpenForgeProject/mageforge-vscode/commit/954c1afa6c7c3d9350a5bf7204147283fddf18df))
+
+
+### Bug Fixes
+
+* escaping HTML attribute sanitization ([eb670ee](https://github.com/OpenForgeProject/mageforge-vscode/commit/eb670ee6cdcc967d877ce51dc5d82791d3894f69))
+* improve formatting of release heading in changelog ([3f20fe7](https://github.com/OpenForgeProject/mageforge-vscode/commit/3f20fe7033560109dc6fef07678d1398e353169a))
+
+
+### Documentation
+
+* add Security Policy ([aa16cb7](https://github.com/OpenForgeProject/mageforge-vscode/commit/aa16cb7a8d3ac6ff1e393eccd27ee8de71c9afc6))
+
 ## [0.4.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.3.0...v0.4.0) (2026-08-10)
 
 
