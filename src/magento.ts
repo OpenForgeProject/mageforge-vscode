@@ -86,6 +86,30 @@ export function buildCommandLine(
 }
 
 /**
+ * Build a shell command line that updates a Composer package.
+ * Respects the configured PHP execution environment.
+ */
+export function buildComposerUpdateCommand(
+    magentoRoot: string,
+    packageName: string = 'openforgeproject/mageforge',
+): string {
+    const env = getExecutionEnvironment(magentoRoot);
+
+    switch (env) {
+        case 'ddev':
+            return `ddev composer update ${packageName}`;
+        case 'docker-compose': {
+            const service = getDockerComposeService();
+            return `docker-compose exec ${service} composer update ${packageName}`;
+        }
+        case 'lando':
+            return `lando composer update ${packageName}`;
+        default:
+            return `composer update ${packageName}`;
+    }
+}
+
+/**
  * Run a MageForge CLI command in a dedicated terminal.
  * Reuses an existing terminal with the same name so the command is not
  * executed multiple times across several newly created terminals.

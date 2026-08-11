@@ -3,7 +3,7 @@ import { CommandsProvider, MAGEFORGE_COMMANDS, MageforgeCommand } from './comman
 import { ThemeTreeItem, ThemesProvider } from './themesProvider';
 import { WelcomeViewProvider } from './welcomeProvider';
 import { ChangelogViewProvider } from './changelogProvider';
-import { buildCommandLine, getMagentoRoot, runInTerminal } from './magento';
+import { buildCommandLine, buildComposerUpdateCommand, getMagentoRoot, runInTerminal } from './magento';
 
 export function activate(context: vscode.ExtensionContext) {
     const commandsProvider = new CommandsProvider();
@@ -44,6 +44,15 @@ export function activate(context: vscode.ExtensionContext) {
         ),
         vscode.commands.registerCommand('mageforge.showChangelog', () => {
             changelogProvider.show(context.extension.packageJSON.version);
+        }),
+        vscode.commands.registerCommand('mageforge.updateMageforge', () => {
+            const magentoRoot = getMagentoRoot();
+            if (!magentoRoot) {
+                void vscode.window.showErrorMessage('MageForge: No workspace folder open.');
+                return;
+            }
+            runInTerminal('MageForge Update', buildComposerUpdateCommand(magentoRoot), magentoRoot);
+            void vscode.window.showInformationMessage('MageForge: Updating the MageForge CLI package in the terminal.');
         }),
     );
 }

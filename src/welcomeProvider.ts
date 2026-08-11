@@ -55,12 +55,22 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
                     void vscode.env.openExternal(vscode.Uri.parse(message.url));
                 } else if (message.command) {
                     void vscode.commands.executeCommand(message.command);
+                } else if (message.type === 'webviewReady') {
+                    void this.sendVersionInfo(webviewView.webview);
                 }
             },
         );
 
         webviewView.webview.html = this.getHtml(webviewView.webview);
-        await this.sendVersionInfo(webviewView.webview);
+
+        // Re-fetch version info when the view becomes visible again, so the
+        // badge never stays stuck in the loading state after the webview was
+        // hidden (e.g. user switched to another sidebar section or left VS Code).
+        webviewView.onDidChangeVisibility(() => {
+            if (webviewView.visible) {
+                void this.sendVersionInfo(webviewView.webview);
+            }
+        });
     }
 
     private async sendVersionInfo(webview: vscode.Webview): Promise<void> {
@@ -302,6 +312,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         }
         .status {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
             gap: 6px;
             margin-top: 12px;
@@ -310,20 +321,17 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            max-width: 100%;
             padding: 3px 10px;
             border-radius: 999px;
             font-size: 11px;
             font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             background: var(--vscode-badge-background);
             color: var(--vscode-badge-foreground);
-        }
-        .badge::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: currentColor;
-            opacity: 0.8;
+            flex: 0 1 auto;
         }
         .badge-ddev {
             background: color-mix(in srgb, #8957e5 25%, transparent);
@@ -346,6 +354,29 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             color: var(--vscode-descriptionForeground, #808080);
         }
         .badge-version.hidden {
+            display: none;
+        }
+        .badge-update {
+            flex: 0 0 auto;
+            padding: 5px 12px;
+            background: #238636;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 2px 0 rgba(35, 134, 54, 0.25);
+            transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+        }
+        .badge-update:hover {
+            background: #2ea043;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(46, 160, 67, 0.35);
+        }
+        .badge-update:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 0 rgba(35, 134, 54, 0.25);
+        }
+        .badge-update.hidden {
             display: none;
         }
         .badge-version.loading {
@@ -498,6 +529,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
                 ? `<div class="status">
                     ${envBadge}
                     <span id="badge-version" class="badge badge-version loading"></span>
+                    <button id="btn-update" class="badge badge-update hidden" data-command="mageforge.updateMageforge">Update</button>
                 </div>`
                 : ''
         }
@@ -530,6 +562,12 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
     <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
 
+        // Notify the extension as soon as the webview is ready to receive
+        // messages. This is more reliable than sending data immediately after
+        // setting webview.html, because the webview may not be fully loaded yet
+        // when VS Code regains focus or the view is restored.
+        vscode.postMessage({ type: 'webviewReady' });
+
         // Show the logo variant matching the current theme background.
         // MageForge-Slogan.svg is made for dark themes, MageForge-Slogan-dark.svg for light themes.
         const lightLogo = document.getElementById('logo-light');
@@ -548,7 +586,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         });
         updateLogo();
 
-        document.querySelectorAll('.action').forEach((button) => {
+        document.querySelectorAll('[data-command], [data-url]').forEach((button) => {
             button.addEventListener('click', () => {
                 if (button.dataset.url) {
                     vscode.postMessage({ url: button.dataset.url });
@@ -563,6 +601,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             const data = event.data;
             if (data.type === 'versionInfo') {
                 const versionBadge = document.getElementById('badge-version');
+                const updateBtn = document.getElementById('btn-update');
                 versionBadge.classList.remove('loading');
                 if (data.mageforge) {
                     let text = 'MageForge CLI v' + data.mageforge;
@@ -573,6 +612,9 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
                         text += ' (outdated)';
                         versionBadge.classList.add('outdated');
                         versionBadge.title = 'Update available: v' + data.mageforge + ' → v' + data.latest;
+                        updateBtn.classList.remove('hidden');
+                        updateBtn.textContent = 'Update to v' + data.latest;
+                        updateBtn.title = 'Update MageForge CLI to v' + data.latest;
                     } else if (data.latest && !data.outdated) {
                         text += ' (latest)';
                     } else {

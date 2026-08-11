@@ -177,6 +177,12 @@
                 "title": "Show Changelog",
                 "category": "MageForge",
                 "icon": "$(notebook-open-as-text)"
+            },
+            {
+                "command": "mageforge.updateMageforge",
+                "title": "Update MageForge",
+                "category": "MageForge",
+                "icon": "$(cloud-download)"
             }
         ],
         "menus": {
