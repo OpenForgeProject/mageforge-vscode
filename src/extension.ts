@@ -154,9 +154,12 @@ export async function runMageforgeCommand(
             const themes = await themesProvider.getThemeCodes();
             if (themes.length > 0) {
                 const picked = await vscode.window.showQuickPick(themes, {
-                    placeHolder: 'Select a theme (or press Esc to run interactively)',
+                    placeHolder: 'Select a theme',
                     canPickMany: false,
                 });
+                if (!picked) {
+                    return;
+                }
                 themeCode = picked;
             }
         }

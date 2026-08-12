@@ -104,6 +104,22 @@ suite('extension.ts unit tests', () => {
             assert.strictEqual(terminals[0].name, 'MageForge: Theme: Watch');
         });
 
+        test('does nothing when user cancels theme selection', async () => {
+            const { runMageforgeCommand } = loadExtension(mockMagento);
+            const themesProvider = createThemesProvider(['Magento/luma']);
+
+            await runMageforgeCommand(
+                {
+                    id: 'mageforge.theme.build',
+                    cliCommand: 'mageforge:theme:build',
+                    acceptsThemes: true,
+                } as MageforgeCommand,
+                themesProvider,
+            );
+
+            assert.strictEqual(terminals.length, 0);
+        });
+
         test('does nothing when no Magento root is found', async () => {
             mockMagento.getMagentoRoot = () => undefined;
             const { runMageforgeCommand } = loadExtension(mockMagento);
