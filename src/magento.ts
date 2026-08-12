@@ -196,7 +196,7 @@ export function execMageforge(
             { cwd: magentoRoot, maxBuffer: 10 * 1024 * 1024 },
             (error, stdout, stderr) => {
                 if (error) {
-                    reject(new Error(stderr || error.message));
+                    reject(new Error(stderr || error.message || 'Command failed'));
                     return;
                 }
                 resolve(stdout);

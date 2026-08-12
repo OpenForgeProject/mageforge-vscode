@@ -107,6 +107,16 @@
                 "icon": "$(eye)"
             },
             {
+                "command": "mageforge.theme.buildInline",
+                "title": "Build",
+                "category": "MageForge"
+            },
+            {
+                "command": "mageforge.theme.watchInline",
+                "title": "Watch",
+                "category": "MageForge"
+            },
+            {
                 "command": "mageforge.theme.clean",
                 "title": "Theme: Clean",
                 "category": "MageForge",
@@ -207,6 +217,16 @@
                 }
             ],
             "view/item/context": [
+                {
+                    "command": "mageforge.theme.buildInline",
+                    "when": "view == mageforge.themes && viewItem == mageforgeTheme",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "mageforge.theme.watchInline",
+                    "when": "view == mageforge.themes && viewItem == mageforgeTheme",
+                    "group": "inline@2"
+                },
                 {
                     "command": "mageforge.theme.build",
                     "when": "view == mageforge.themes && viewItem == mageforgeTheme",
