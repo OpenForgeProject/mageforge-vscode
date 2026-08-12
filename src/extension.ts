@@ -68,7 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
  * Shows an update notification and opens the changelog tab when the extension
  * version has changed since the last activation.
  */
-async function showUpdateNotificationIfNeeded(
+export async function showUpdateNotificationIfNeeded(
     context: vscode.ExtensionContext,
     changelogProvider: ChangelogViewProvider,
 ): Promise<void> {
@@ -97,7 +97,7 @@ async function showUpdateNotificationIfNeeded(
  * Explorer context menu: override the selected template file in a chosen theme.
  * Runs: bin/magento mageforge:template:override <file> --theme <Vendor/theme>
  */
-async function overrideFile(
+export async function overrideFile(
     uri: vscode.Uri | undefined,
     themesProvider: ThemesProvider,
 ): Promise<void> {
@@ -133,7 +133,7 @@ async function overrideFile(
     runInTerminal('MageForge: template:override', commandLine, magentoRoot);
 }
 
-async function runMageforgeCommand(
+export async function runMageforgeCommand(
     cmd: MageforgeCommand,
     themesProvider: ThemesProvider,
     item?: ThemeTreeItem,

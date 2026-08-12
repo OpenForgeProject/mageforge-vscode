@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getMagentoRoot, getExecutionEnvironment } from './magento';
+import { isAllowedExternalUrl } from './url';
 import { execFile } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -51,7 +52,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.onDidReceiveMessage(
             (message: { command?: string; url?: string; type?: string }) => {
-                if (message.url) {
+                if (message.url && isAllowedExternalUrl(message.url)) {
                     void vscode.env.openExternal(vscode.Uri.parse(message.url));
                 } else if (message.command) {
                     void vscode.commands.executeCommand(message.command);
