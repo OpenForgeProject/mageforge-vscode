@@ -75,6 +75,11 @@ async function showUpdateNotificationIfNeeded(
     const currentVersion = context.extension.packageJSON.version as string;
     const lastVersion = context.globalState.get<string>('mageforge.lastSeenVersion');
 
+    // Persist the version BEFORE showing any UI: an ignored notification or a
+    // window reload (e.g. when switching projects) must not cause the update
+    // message to reappear on every activation.
+    await context.globalState.update('mageforge.lastSeenVersion', currentVersion);
+
     if (lastVersion && lastVersion !== currentVersion) {
         changelogProvider.show(`v${currentVersion}`);
         const selection = await vscode.window.showInformationMessage(
@@ -86,8 +91,6 @@ async function showUpdateNotificationIfNeeded(
             changelogProvider.show(`v${currentVersion}`);
         }
     }
-
-    await context.globalState.update('mageforge.lastSeenVersion', currentVersion);
 }
 
 /**
