@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import mockRequire = require('mock-require');
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { restoreVscodeMock } from './setup';
 
 type MockConfig = {
     [key: string]: unknown;
@@ -35,6 +36,8 @@ suite('magento.ts unit tests', () => {
 
     teardown(() => {
         fs.rmSync(sandbox, { recursive: true, force: true });
+        // Restore the full vscode mock from setup.ts for other test suites.
+        restoreVscodeMock();
     });
 
     function loadModule(config: MockConfig = {}): typeof import('../../magento') {
@@ -194,6 +197,21 @@ suite('magento.ts unit tests', () => {
                 line,
                 'docker-compose exec app bin/magento mageforge\\:theme\\:list',
             );
+        });
+
+        test('quotes Windows-style paths safely', () => {
+            const root = createMagentoRoot();
+            moduleUnderTest = loadModule({
+                'mageforge.phpExecution': 'local',
+                'mageforge.phpBinary': 'php',
+            });
+            const line = moduleUnderTest.buildCommandLine(root, 'mageforge:template:override', [
+                'C:\\Users\\test\\file.phtml',
+                '--theme',
+                'Magento/luma',
+            ]);
+            assert.ok(line.includes('C:\\Users\\test\\file.phtml'));
+            assert.ok(line.includes('Magento/luma'));
         });
     });
 

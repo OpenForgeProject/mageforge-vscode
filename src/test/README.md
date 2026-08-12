@@ -9,9 +9,13 @@ src/test/
 ├── extension.test.ts          # VS Code integration tests
 ├── unit/
 │   ├── setup.ts               # Mocha setup: mocks the vscode API for unit tests
+│   ├── changelogProvider.test.ts
 │   ├── commandsProvider.test.ts
+│   ├── extension.test.ts
 │   ├── magento.test.ts
-│   └── themesProvider.test.ts
+│   ├── themesProvider.test.ts
+│   ├── themesProviderClass.test.ts
+│   └── welcomeProvider.test.ts
 └── README.md                  # This file
 ```
 
