@@ -90,13 +90,14 @@ suite('welcomeProvider.ts unit tests', () => {
         const provider = new WelcomeViewProvider({ fsPath: '/ext' } as import('vscode').Uri);
         const view = createMockWebviewView();
         await provider.resolveWebviewView(view as unknown as import('vscode').WebviewView);
+        const testUrl = 'https://github.com/OpenForgeProject/mageforge';
 
         view.webview.onDidReceiveMessageHandler!({
-            url: 'https://example.com',
+            url: testUrl,
         });
 
         await new Promise((resolve) => setTimeout(resolve, 10));
-        assert.ok(vscode.env.openedExternals.includes('https://example.com'));
+        assert.ok(vscode.env.openedExternals.includes(testUrl));
     });
 
     test('webview message with dangerous url is ignored', async () => {

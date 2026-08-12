@@ -95,17 +95,18 @@ suite('changelogProvider.ts unit tests', () => {
     test('webview message with url opens external link', async () => {
         const extPath = createExtensionWithChangelog('# Changelog');
         const provider = new ChangelogViewProvider({ fsPath: extPath } as import('vscode').Uri);
+        const testUrl = 'https://github.com/OpenForgeProject/mageforge';
 
         provider.show();
         const panel = getLastWebviewPanel();
         assert.ok(panel);
         assert.ok(panel!.webview.onDidReceiveMessageHandler);
 
-        panel!.webview.onDidReceiveMessageHandler!({ url: 'https://example.com' });
+        panel!.webview.onDidReceiveMessageHandler!({ url: testUrl });
 
         await new Promise((resolve) => setTimeout(resolve, 10));
         const env = vscode.env as unknown as { openedExternals: string[] };
-        assert.ok(env.openedExternals.includes('https://example.com'));
+        assert.ok(env.openedExternals.includes(testUrl));
     });
 
     test('webview message with dangerous url is ignored', async () => {
