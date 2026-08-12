@@ -18,7 +18,9 @@ export class ChangelogViewProvider {
      * Optionally pass a title suffix, e.g. the new version number.
      */
     show(subtitle?: string): void {
-        const title = subtitle ? `MageForge updated — ${subtitle}` : 'MageForge Changelog';
+        const title = subtitle
+            ? `MageForge extension updated — ${subtitle}`
+            : 'MageForge Extension Changelog';
 
         if (this.panel) {
             this.panel.title = title;
@@ -99,7 +101,6 @@ export class ChangelogViewProvider {
         .hero .badge-new {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
             padding: 5px 12px;
             margin-bottom: 20px;
             border-radius: 999px;
@@ -111,13 +112,6 @@ export class ChangelogViewProvider {
             background: color-mix(in srgb, var(--accent) 14%, transparent);
             border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
             animation: pulse 2.2s ease-in-out infinite;
-        }
-        .hero .badge-new::before {
-            content: '';
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--accent);
         }
         @keyframes pulse {
             0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent); }
@@ -360,10 +354,10 @@ export class ChangelogViewProvider {
 <body>
     <div class="container">
         <div class="hero">
-            <span class="badge-new">New Release ${subtitle}</span>
+            <span class="badge-new">New Extension Release ${subtitle}</span>
             <img class="logo" src="${logoUri}" alt="MageForge">
-            <h1>What's new in MageForge</h1>
-            <p>See what changed in the latest version of the extension.</p>
+            <h1>What's new in the MageForge extension for VS Code</h1>
+            <p>This update is for the VS Code extension, not the MageForge Composer package.</p>
             <div class="actions">
                 <button class="btn btn-primary" data-url="${marketplaceUrl}">
                     <i class="ti ti-star"></i> Rate on Marketplace
