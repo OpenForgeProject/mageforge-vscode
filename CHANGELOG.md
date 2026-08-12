@@ -3,6 +3,27 @@
 All changes to the MageForge extension will be documented here.
 If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
+## [0.8.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.7.0...v0.8.0) (2026-08-12)
+
+
+### Features
+
+* add inline commands for theme build and watch in the themes view ([6a4e6a2](https://github.com/OpenForgeProject/mageforge-vscode/commit/6a4e6a2e9e55c092d988b49436d51c524841858d))
+* add inline commands for theme build and watch in the themes view ([1fd6c19](https://github.com/OpenForgeProject/mageforge-vscode/commit/1fd6c19cb345810e445f77e8084e6042d83a0590))
+
+
+### Bug Fixes
+
+* handle user cancellation for quick actions ([930b1b5](https://github.com/OpenForgeProject/mageforge-vscode/commit/930b1b5c06fcc6bb78c6ff445fbfbcab060b4f86))
+* handle user cancellation for quick actions ([4adc945](https://github.com/OpenForgeProject/mageforge-vscode/commit/4adc945892d1e45257d4430cccfac454fcf515ea))
+* improve error handling with user-friendly messages in ThemesProvider ([1fd6c19](https://github.com/OpenForgeProject/mageforge-vscode/commit/1fd6c19cb345810e445f77e8084e6042d83a0590))
+
+
+### Documentation
+
+* add guidelines for writing effective commit messages ([13af4a2](https://github.com/OpenForgeProject/mageforge-vscode/commit/13af4a2485b4d7a62030586b83b148818ac1573d))
+* expand guidelines on code quality and testing practices ([0f3b311](https://github.com/OpenForgeProject/mageforge-vscode/commit/0f3b311125f2fc608ee5e650a20ce762609276b8))
+
 ## [0.7.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.6.1...v0.7.0) (2026-08-12)
 
 
