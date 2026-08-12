@@ -181,11 +181,13 @@ export function execMageforge(
                 file = 'lando';
                 finalArgs = ['php', ...baseArgs];
                 break;
-            default:
+            default: {
                 // phpBinary may be a full command like "docker-compose exec php"
-                const parts = phpBinary.split(/\s+/);
+                const parts = shellQuote.parse(phpBinary) as string[];
                 file = parts[0];
                 finalArgs = [...parts.slice(1), ...baseArgs];
+                break;
+            }
         }
 
         execFile(

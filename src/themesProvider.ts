@@ -118,7 +118,9 @@ export function parseThemeList(output: string): MagentoTheme[] {
         const pathCell = cells.find((cell) => /^(frontend|adminhtml)\//.test(cell));
         const area = pathCell?.startsWith('adminhtml/') ? 'adminhtml' : 'frontend';
 
-        themes.set(code, { code, title, area });
+        if (!themes.has(code)) {
+            themes.set(code, { code, title, area });
+        }
     }
 
     return [...themes.values()];
