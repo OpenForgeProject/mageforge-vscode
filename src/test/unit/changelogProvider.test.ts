@@ -107,4 +107,20 @@ suite('changelogProvider.ts unit tests', () => {
         const env = vscode.env as unknown as { openedExternals: string[] };
         assert.ok(env.openedExternals.includes('https://example.com'));
     });
+
+    test('webview message with dangerous url is ignored', async () => {
+        const extPath = createExtensionWithChangelog('# Changelog');
+        const provider = new ChangelogViewProvider({ fsPath: extPath } as import('vscode').Uri);
+
+        provider.show();
+        const panel = getLastWebviewPanel();
+        assert.ok(panel);
+        assert.ok(panel!.webview.onDidReceiveMessageHandler);
+
+        panel!.webview.onDidReceiveMessageHandler!({ url: 'javascript:alert(1)' });
+
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        const env = vscode.env as unknown as { openedExternals: string[] };
+        assert.strictEqual(env.openedExternals.length, 0);
+    });
 });

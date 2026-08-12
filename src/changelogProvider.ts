@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { isAllowedExternalUrl } from './url';
 
 const CHANGELOG_URL = 'https://github.com/OpenForgeProject/mageforge-vscode/blob/main/CHANGELOG.md';
 
@@ -41,7 +42,7 @@ export class ChangelogViewProvider {
 
         this.panel.webview.html = this.getHtml(this.panel.webview, subtitle);
         this.panel.webview.onDidReceiveMessage((message: { url?: string }) => {
-            if (message.url) {
+            if (message.url && isAllowedExternalUrl(message.url)) {
                 void vscode.env.openExternal(vscode.Uri.parse(message.url));
             }
         }, undefined);

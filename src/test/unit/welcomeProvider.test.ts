@@ -99,6 +99,25 @@ suite('welcomeProvider.ts unit tests', () => {
         assert.ok(vscode.env.openedExternals.includes('https://example.com'));
     });
 
+    test('webview message with dangerous url is ignored', async () => {
+        const vscode = require('vscode');
+        const { WelcomeViewProvider } = loadWelcomeProvider({
+            getMagentoRoot: () => createMagentoRoot(),
+            getExecutionEnvironment: () => 'local',
+        });
+
+        const provider = new WelcomeViewProvider({ fsPath: '/ext' } as import('vscode').Uri);
+        const view = createMockWebviewView();
+        await provider.resolveWebviewView(view as unknown as import('vscode').WebviewView);
+
+        view.webview.onDidReceiveMessageHandler!({
+            url: 'javascript:alert(1)',
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        assert.strictEqual(vscode.env.openedExternals.length, 0);
+    });
+
     test('webview message with command executes command', async () => {
         const vscode = require('vscode');
         const { WelcomeViewProvider } = loadWelcomeProvider({

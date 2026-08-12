@@ -5,6 +5,8 @@ interface MockConfig {
 }
 
 let lastWebviewPanel: { webview: ReturnType<typeof createMockWebview> } | undefined;
+const executedCommands: string[] = [];
+const openedExternals: string[] = [];
 
 export function getLastWebviewPanel():
     { webview: ReturnType<typeof createMockWebview> } | undefined {
@@ -16,6 +18,17 @@ const defaultVscodeMock = createMockVscode();
 export function restoreVscodeMock(): void {
     mockRequire('vscode', defaultVscodeMock);
 }
+
+export function resetMockState(): void {
+    executedCommands.length = 0;
+    openedExternals.length = 0;
+}
+
+export const mochaHooks = {
+    beforeEach(): void {
+        resetMockState();
+    },
+};
 
 export type CapturedMessage = {
     url?: string;
@@ -72,9 +85,6 @@ export function createMockWebviewView(): {
 }
 
 function createMockVscode(config: MockConfig = {}): typeof import('vscode') {
-    const executedCommands: string[] = [];
-    const openedExternals: string[] = [];
-
     return {
         workspace: {
             getConfiguration: (section: string) => ({
