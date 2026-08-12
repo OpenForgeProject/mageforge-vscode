@@ -126,7 +126,7 @@ async function overrideFile(
     }
 
     const commandLine = buildCommandLine(magentoRoot, 'mageforge:template:override', [
-        `'${uri.fsPath}'`,
+        uri.fsPath,
         '--theme',
         theme,
     ]);

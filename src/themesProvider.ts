@@ -13,10 +13,12 @@ export class ThemesProvider implements vscode.TreeDataProvider<ThemeTreeItem> {
 
     private themes: MagentoTheme[] | undefined;
     private loadError: string | undefined;
+    private loadingPromise: Promise<void> | undefined;
 
     refresh(): void {
         this.themes = undefined;
         this.loadError = undefined;
+        this.loadingPromise = undefined;
         this._onDidChangeTreeData.fire(undefined);
     }
 
@@ -29,9 +31,7 @@ export class ThemesProvider implements vscode.TreeDataProvider<ThemeTreeItem> {
             return [];
         }
 
-        if (this.themes === undefined) {
-            await this.loadThemes();
-        }
+        await this.ensureThemesLoaded();
 
         if (this.loadError) {
             return [new ThemeTreeItem(undefined, this.loadError)];
@@ -42,15 +42,30 @@ export class ThemesProvider implements vscode.TreeDataProvider<ThemeTreeItem> {
 
     /** Cached list of theme codes for quick-picks. */
     async getThemeCodes(): Promise<string[]> {
-        if (this.themes === undefined) {
-            await this.loadThemes();
-        }
+        await this.ensureThemesLoaded();
         return (this.themes ?? []).map((t) => t.code);
+    }
+
+    private async ensureThemesLoaded(): Promise<void> {
+        if (this.themes !== undefined) {
+            return;
+        }
+
+        if (this.loadingPromise) {
+            await this.loadingPromise;
+            return;
+        }
+
+        this.loadingPromise = this.loadThemes().finally(() => {
+            this.loadingPromise = undefined;
+        });
+        await this.loadingPromise;
     }
 
     private async loadThemes(): Promise<void> {
         const root = getMagentoRoot();
         if (!root) {
+            this.themes = [];
             this.loadError = 'No workspace folder open';
             return;
         }
@@ -58,6 +73,7 @@ export class ThemesProvider implements vscode.TreeDataProvider<ThemeTreeItem> {
         try {
             const output = await execMageforge(root, 'mageforge:theme:list');
             this.themes = parseThemeList(output);
+            this.loadError = undefined;
         } catch (error) {
             this.themes = [];
             this.loadError = error instanceof Error ? error.message : String(error);

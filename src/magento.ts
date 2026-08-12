@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import * as shellQuote from 'shell-quote';
 
 /**
  * Resolve the Magento root directory (contains bin/magento).
@@ -10,10 +11,18 @@ export function getMagentoRoot(): string | undefined {
     const configured = vscode.workspace
         .getConfiguration('mageforge')
         .get<string>('magentoRootPath');
-    if (configured && configured.trim().length > 0) {
-        return configured;
+    const candidate = configured?.trim() || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+    if (!candidate) {
+        return undefined;
     }
-    return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+    // Validate that the resolved directory looks like a Magento root.
+    if (!fs.existsSync(path.join(candidate, 'bin', 'magento'))) {
+        return undefined;
+    }
+
+    return candidate;
 }
 
 type ExecutionEnvironment = 'ddev' | 'docker-compose' | 'lando' | 'local';
@@ -58,6 +67,7 @@ export function getDockerComposeService(): string {
 
 /**
  * Build the shell command line that runs a MageForge CLI command.
+ * All arguments are safely quoted to prevent shell injection.
  */
 export function buildCommandLine(
     magentoRoot: string,
@@ -67,21 +77,29 @@ export function buildCommandLine(
     const phpBinary = vscode.workspace
         .getConfiguration('mageforge')
         .get<string>('phpBinary', 'php');
-    const command = ['bin/magento', mageforgeCommand, ...args].join(' ');
     const env = getExecutionEnvironment(magentoRoot);
 
     switch (env) {
         case 'ddev':
-            return `ddev php ${command}`;
+            return shellQuote.quote(['ddev', 'php', 'bin/magento', mageforgeCommand, ...args]);
         case 'docker-compose': {
             const service = getDockerComposeService();
-            return `docker-compose exec ${service} ${command}`;
+            return shellQuote.quote([
+                'docker-compose',
+                'exec',
+                service,
+                'bin/magento',
+                mageforgeCommand,
+                ...args,
+            ]);
         }
         case 'lando':
-            return `lando php ${command}`;
-        default:
+            return shellQuote.quote(['lando', 'php', 'bin/magento', mageforgeCommand, ...args]);
+        default: {
             // phpBinary can be a full command like "docker-compose exec php" or just "php"
-            return `${phpBinary} ${command}`;
+            const phpParts = shellQuote.parse(phpBinary) as string[];
+            return shellQuote.quote([...phpParts, 'bin/magento', mageforgeCommand, ...args]);
+        }
     }
 }
 
@@ -97,15 +115,22 @@ export function buildComposerUpdateCommand(
 
     switch (env) {
         case 'ddev':
-            return `ddev composer update ${packageName}`;
+            return shellQuote.quote(['ddev', 'composer', 'update', packageName]);
         case 'docker-compose': {
             const service = getDockerComposeService();
-            return `docker-compose exec ${service} composer update ${packageName}`;
+            return shellQuote.quote([
+                'docker-compose',
+                'exec',
+                service,
+                'composer',
+                'update',
+                packageName,
+            ]);
         }
         case 'lando':
-            return `lando composer update ${packageName}`;
+            return shellQuote.quote(['lando', 'composer', 'update', packageName]);
         default:
-            return `composer update ${packageName}`;
+            return shellQuote.quote(['composer', 'update', packageName]);
     }
 }
 
