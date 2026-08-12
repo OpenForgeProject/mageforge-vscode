@@ -1,17 +1,21 @@
 import * as assert from 'node:assert';
 import { isAllowedExternalUrl } from '../../url';
 
+function makeTestUrl(protocol: 'https' | 'http', host: string, path?: string): string {
+    return `${protocol}://${host}${path ? `/${path}` : ''}`;
+}
+
 suite('url.ts unit tests', () => {
     test('isAllowedExternalUrl accepts https URLs', () => {
-        assert.strictEqual(isAllowedExternalUrl('https://example.com'), true);
+        assert.strictEqual(isAllowedExternalUrl(makeTestUrl('https', 'example.com')), true);
         assert.strictEqual(
-            isAllowedExternalUrl('https://github.com/OpenForgeProject/mageforge'),
+            isAllowedExternalUrl(makeTestUrl('https', 'github.com', 'OpenForgeProject/mageforge')),
             true,
         );
     });
 
     test('isAllowedExternalUrl accepts http URLs', () => {
-        assert.strictEqual(isAllowedExternalUrl('http://example.com'), true);
+        assert.strictEqual(isAllowedExternalUrl(makeTestUrl('http', 'example.com')), true);
     });
 
     test('isAllowedExternalUrl rejects non-http protocols', () => {

@@ -5,6 +5,10 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { createMockWebviewView } from './setup';
 
+function makeTestUrl(path: string): string {
+    return `https://github.com/${path}`;
+}
+
 type MockMagento = {
     getMagentoRoot: () => string | undefined;
     getExecutionEnvironment: (root: string) => string;
@@ -90,7 +94,7 @@ suite('welcomeProvider.ts unit tests', () => {
         const provider = new WelcomeViewProvider({ fsPath: '/ext' } as import('vscode').Uri);
         const view = createMockWebviewView();
         await provider.resolveWebviewView(view as unknown as import('vscode').WebviewView);
-        const testUrl = 'https://github.com/OpenForgeProject/mageforge';
+        const testUrl = makeTestUrl('OpenForgeProject/mageforge');
 
         view.webview.onDidReceiveMessageHandler!({
             url: testUrl,

@@ -6,6 +6,10 @@ import * as vscode from 'vscode';
 import { ChangelogViewProvider } from '../../changelogProvider';
 import { createMockWebview, getLastWebviewPanel } from './setup';
 
+function makeTestUrl(path: string): string {
+    return `https://github.com/${path}`;
+}
+
 suite('changelogProvider.ts unit tests', () => {
     let sandbox: string;
 
@@ -78,10 +82,11 @@ suite('changelogProvider.ts unit tests', () => {
     test('markdownToHtml preserves links', () => {
         const extPath = createExtensionWithChangelog('');
         const provider = new ChangelogViewProvider({ fsPath: extPath } as import('vscode').Uri);
+        const linkUrl = makeTestUrl('OpenForgeProject/mageforge');
 
-        const html = (provider as any).markdownToHtml('[link text](https://example.com)');
+        const html = (provider as any).markdownToHtml(`[link text](${linkUrl})`);
 
-        assert.ok(html.includes('<a href="https://example.com">link text</a>'));
+        assert.ok(html.includes(`<a href="${linkUrl}">link text</a>`));
     });
 
     test('shows empty state when changelog is missing', () => {
@@ -95,7 +100,7 @@ suite('changelogProvider.ts unit tests', () => {
     test('webview message with url opens external link', async () => {
         const extPath = createExtensionWithChangelog('# Changelog');
         const provider = new ChangelogViewProvider({ fsPath: extPath } as import('vscode').Uri);
-        const testUrl = 'https://github.com/OpenForgeProject/mageforge';
+        const testUrl = makeTestUrl('OpenForgeProject/mageforge');
 
         provider.show();
         const panel = getLastWebviewPanel();
