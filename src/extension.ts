@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
             new WelcomeViewProvider(context.extensionUri),
         ),
         vscode.window.registerTreeDataProvider('mageforge.commands', commandsProvider),
-        vscode.window.registerTreeDataProvider('mageforge.themes', themesProvider),
+        vscode.window.createTreeView('mageforge.themes', { treeDataProvider: themesProvider }),
     );
 
     // Notify the user and open the changelog after the extension was updated.
@@ -38,6 +38,18 @@ export function activate(context: vscode.ExtensionContext) {
             }),
         );
     }
+
+    // Inline text-only aliases for the themes view.
+    const buildCmd = MAGEFORGE_COMMANDS.find((c) => c.id === 'mageforge.theme.build')!;
+    const watchCmd = MAGEFORGE_COMMANDS.find((c) => c.id === 'mageforge.theme.watch')!;
+    context.subscriptions.push(
+        vscode.commands.registerCommand('mageforge.theme.buildInline', (item?: ThemeTreeItem) =>
+            runMageforgeCommand(buildCmd, themesProvider, item),
+        ),
+        vscode.commands.registerCommand('mageforge.theme.watchInline', (item?: ThemeTreeItem) =>
+            runMageforgeCommand(watchCmd, themesProvider, item),
+        ),
+    );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('mageforge.refreshThemes', () => themesProvider.refresh()),

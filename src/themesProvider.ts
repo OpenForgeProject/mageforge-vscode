@@ -76,7 +76,9 @@ export class ThemesProvider implements vscode.TreeDataProvider<ThemeTreeItem> {
             this.loadError = undefined;
         } catch (error) {
             this.themes = [];
-            this.loadError = error instanceof Error ? error.message : String(error);
+            const message = error instanceof Error ? error.message : String(error);
+            const cleaned = stripAnsi(message);
+            this.loadError = formatLoadError(cleaned);
         }
     }
 }
@@ -84,6 +86,32 @@ export class ThemesProvider implements vscode.TreeDataProvider<ThemeTreeItem> {
 /** Strip ANSI escape sequences (colors, cursor movement) from console output. */
 function stripAnsi(text: string): string {
     return text.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
+}
+
+/**
+ * Convert a raw command failure into a user-friendly error message.
+ * Long messages are truncated so they do not break the tree view layout.
+ */
+function formatLoadError(message: string): string {
+    const normalized = message.toLowerCase();
+
+    if (
+        normalized.includes('ddev') &&
+        /not (running|started)|could not|failed|unable/i.test(message)
+    ) {
+        return 'DDEV is not running. Start the project with `ddev start` and try again.';
+    }
+    if (normalized.includes('docker-compose') || normalized.includes('docker compose')) {
+        return 'Docker Compose service unavailable. Check that containers are running.';
+    }
+    if (normalized.includes('lando')) {
+        return 'Lando environment unavailable. Start the project with `lando start`.';
+    }
+    if (normalized.includes('command not found') || normalized.includes('no such file')) {
+        return 'MageForge CLI not found. Run `composer require openforgeproject/mageforge`.';
+    }
+
+    return message.length > 120 ? `${message.slice(0, 120)}…` : message;
 }
 
 /**
