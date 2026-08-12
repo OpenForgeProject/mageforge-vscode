@@ -3,6 +3,29 @@
 All changes to the MageForge extension will be documented here.
 If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
+## [0.7.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.6.1...v0.7.0) (2026-08-12)
+
+
+### Features
+
+* add shell-quote dependency and improve command line argument handling ([a418eae](https://github.com/OpenForgeProject/mageforge-vscode/commit/a418eae578c392f657e411b7b553f50c03bf0fd7))
+* implement integration tests for multiple OS and enhance test coverage ([e5f8f0e](https://github.com/OpenForgeProject/mageforge-vscode/commit/e5f8f0e7427af47030a02bd5311622a55b7c479a))
+* implement URL validation for external links in webview messages ([a1a896d](https://github.com/OpenForgeProject/mageforge-vscode/commit/a1a896d48cd1578d10f122ea824fd9cca2aa6d49))
+* limit displayed releases to 10 and add button for full changelog ([b0dc5a9](https://github.com/OpenForgeProject/mageforge-vscode/commit/b0dc5a9799672099d8f4424ae898db3e0e91f7e2))
+* **tests:** add unit and integration tests for MageForge extension ([c67ae5d](https://github.com/OpenForgeProject/mageforge-vscode/commit/c67ae5dc5950337b50dd92b8ed042c88afe29ccd))
+* **tests:** add unit and integration tests for MageForge extension ([7de6d9b](https://github.com/OpenForgeProject/mageforge-vscode/commit/7de6d9b939626bdcf8d5aadb1edaaccb00929ef2))
+
+
+### Bug Fixes
+
+* improve changelog update notification ([53b44d8](https://github.com/OpenForgeProject/mageforge-vscode/commit/53b44d8ddde580d0dff1dc8505f5f5729f1008fa))
+* prevent update notification from reappearing on every activation ([5c4fd71](https://github.com/OpenForgeProject/mageforge-vscode/commit/5c4fd7175eb25f83301b7303f1eba6ab8ab36aee))
+
+
+### Code Refactoring
+
+* unify URL generation in tests using makeTestUrl function ([45a1340](https://github.com/OpenForgeProject/mageforge-vscode/commit/45a13402389b5bd30cdb34c198cbc967850d5d35))
+
 ## [0.6.1](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.6.0...v0.6.1) (2026-08-11)
 
 
