@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { CommandsProvider, MAGEFORGE_COMMANDS, MageforgeCommand } from './commandsProvider';
 import { ThemeTreeItem, ThemesProvider } from './themesProvider';
@@ -137,8 +138,12 @@ export async function overrideFile(
         return;
     }
 
+    // Use a path relative to the Magento root so the command works inside
+    // containerized environments (ddev, docker-compose, lando) where the
+    // absolute host path does not exist.
+    const relativeTemplatePath = path.relative(magentoRoot, uri.fsPath);
     const commandLine = buildCommandLine(magentoRoot, 'mageforge:template:override', [
-        uri.fsPath,
+        relativeTemplatePath,
         '--theme',
         theme,
     ]);

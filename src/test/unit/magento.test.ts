@@ -131,7 +131,7 @@ suite('magento.ts unit tests', () => {
             const line = moduleUnderTest.buildCommandLine(root, 'mageforge:theme:build', [
                 'Magento/luma',
             ]);
-            assert.strictEqual(line, 'php bin/magento mageforge\\:theme\\:build Magento/luma');
+            assert.strictEqual(line, 'php bin/magento mageforge:theme:build Magento/luma');
         });
 
         test('quotes paths with spaces', () => {
@@ -175,7 +175,7 @@ suite('magento.ts unit tests', () => {
             ]);
             assert.strictEqual(
                 line,
-                'docker-compose exec php bin/magento mageforge\\:theme\\:build Magento/luma',
+                'docker-compose exec php bin/magento mageforge:theme:build Magento/luma',
             );
         });
 
@@ -183,7 +183,7 @@ suite('magento.ts unit tests', () => {
             const root = createMagentoRoot();
             moduleUnderTest = loadModule({ 'mageforge.phpExecution': 'ddev' });
             const line = moduleUnderTest.buildCommandLine(root, 'mageforge:theme:list');
-            assert.strictEqual(line, 'ddev php bin/magento mageforge\\:theme\\:list');
+            assert.strictEqual(line, 'ddev php bin/magento mageforge:theme:list');
         });
 
         test('builds docker-compose command with custom service', () => {
@@ -193,10 +193,7 @@ suite('magento.ts unit tests', () => {
                 'mageforge.dockerComposeService': 'app',
             });
             const line = moduleUnderTest.buildCommandLine(root, 'mageforge:theme:list');
-            assert.strictEqual(
-                line,
-                'docker-compose exec app bin/magento mageforge\\:theme\\:list',
-            );
+            assert.strictEqual(line, 'docker-compose exec app bin/magento mageforge:theme:list');
         });
 
         test('quotes Windows-style paths safely', () => {

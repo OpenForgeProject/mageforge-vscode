@@ -68,6 +68,10 @@ export function getDockerComposeService(): string {
 /**
  * Build the shell command line that runs a MageForge CLI command.
  * All arguments are safely quoted to prevent shell injection.
+ * The MageForge command name itself is not quoted because it is always a
+ * known, hard-coded CLI identifier (e.g. `mageforge:theme:build`); escaping
+ * its colons makes the generated command hard to read and can confuse
+ * containerized PHP wrappers.
  */
 export function buildCommandLine(
     magentoRoot: string,
@@ -79,26 +83,27 @@ export function buildCommandLine(
         .get<string>('phpBinary', 'php');
     const env = getExecutionEnvironment(magentoRoot);
 
+    const quote = (parts: string[]): string => shellQuote.quote(parts);
+
+    function buildLine(baseParts: string[]): string {
+        const base = quote(baseParts);
+        const quotedArgs = args.length > 0 ? ` ${quote(args)}` : '';
+        return `${base} ${mageforgeCommand}${quotedArgs}`;
+    }
+
     switch (env) {
         case 'ddev':
-            return shellQuote.quote(['ddev', 'php', 'bin/magento', mageforgeCommand, ...args]);
+            return buildLine(['ddev', 'php', 'bin/magento']);
         case 'docker-compose': {
             const service = getDockerComposeService();
-            return shellQuote.quote([
-                'docker-compose',
-                'exec',
-                service,
-                'bin/magento',
-                mageforgeCommand,
-                ...args,
-            ]);
+            return buildLine(['docker-compose', 'exec', service, 'bin/magento']);
         }
         case 'lando':
-            return shellQuote.quote(['lando', 'php', 'bin/magento', mageforgeCommand, ...args]);
+            return buildLine(['lando', 'php', 'bin/magento']);
         default: {
             // phpBinary can be a full command like "docker-compose exec php" or just "php"
             const phpParts = shellQuote.parse(phpBinary) as string[];
-            return shellQuote.quote([...phpParts, 'bin/magento', mageforgeCommand, ...args]);
+            return buildLine([...phpParts, 'bin/magento']);
         }
     }
 }
