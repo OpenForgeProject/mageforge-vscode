@@ -1,1 +1,4 @@
-npx lint-staged && npm run format:check && npm run test:unit
+export PATH="/opt/homebrew/bin:$PATH"
+export PATH="node_modules/.bin:$PATH"
+
+lint-staged && prettier --check . && mocha --ui tdd --require ts-node/register --require src/test/unit/setup.ts 'src/test/unit/**/*.test.ts'
