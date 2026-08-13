@@ -14,11 +14,13 @@ export class ThemesProvider implements vscode.TreeDataProvider<ThemeTreeItem> {
     private themes: MagentoTheme[] | undefined;
     private loadError: string | undefined;
     private loadingPromise: Promise<void> | undefined;
+    private loadGeneration = 0;
 
     refresh(): void {
         this.themes = undefined;
         this.loadError = undefined;
         this.loadingPromise = undefined;
+        this.loadGeneration++;
         this._onDidChangeTreeData.fire(undefined);
     }
 
@@ -56,15 +58,22 @@ export class ThemesProvider implements vscode.TreeDataProvider<ThemeTreeItem> {
             return;
         }
 
-        this.loadingPromise = this.loadThemes().finally(() => {
-            this.loadingPromise = undefined;
+        const generation = this.loadGeneration;
+        this.loadingPromise = this.loadThemes(generation).finally(() => {
+            // Only clear the promise if no newer refresh has started.
+            if (this.loadingPromise && this.loadGeneration === generation) {
+                this.loadingPromise = undefined;
+            }
         });
         await this.loadingPromise;
     }
 
-    private async loadThemes(): Promise<void> {
+    private async loadThemes(generation: number): Promise<void> {
         const root = getMagentoRoot();
         if (!root) {
+            if (generation !== this.loadGeneration) {
+                return;
+            }
             this.themes = [];
             this.loadError = 'No workspace folder open';
             return;
@@ -72,9 +81,15 @@ export class ThemesProvider implements vscode.TreeDataProvider<ThemeTreeItem> {
 
         try {
             const output = await execMageforge(root, 'mageforge:theme:list');
+            if (generation !== this.loadGeneration) {
+                return;
+            }
             this.themes = parseThemeList(output);
             this.loadError = undefined;
         } catch (error) {
+            if (generation !== this.loadGeneration) {
+                return;
+            }
             this.themes = [];
             const message = error instanceof Error ? error.message : String(error);
             const cleaned = stripAnsi(message);

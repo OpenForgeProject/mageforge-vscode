@@ -137,4 +137,33 @@ suite('ThemesProvider class unit tests', () => {
         assert.strictEqual(a.length, 1);
         assert.deepStrictEqual(b, ['Magento/luma']);
     });
+
+    test('refresh during load discards stale result', async () => {
+        let firstCall = true;
+        let firstResolve!: (value: string) => void;
+        const firstPromise = new Promise<string>((resolve) => {
+            firstResolve = resolve;
+        });
+        const { ThemesProvider } = loadThemesProvider({
+            getMagentoRoot: () => '/magento',
+            execMageforge: async () => {
+                if (firstCall) {
+                    firstCall = false;
+                    return firstPromise;
+                }
+                return '│ Magento/blank │ Blank │ vendor/magento/theme-frontend-blank │';
+            },
+        });
+
+        const provider = new ThemesProvider();
+        const loadPromise = provider.getChildren();
+        provider.refresh();
+        firstResolve('│ Magento/luma │ Luma │ vendor/magento/theme-frontend-luma │');
+        await loadPromise;
+
+        const children = await provider.getChildren();
+
+        assert.strictEqual(children.length, 1);
+        assert.strictEqual(children[0].theme?.code, 'Magento/blank');
+    });
 });
