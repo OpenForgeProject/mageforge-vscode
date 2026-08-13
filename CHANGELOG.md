@@ -3,6 +3,16 @@
 All changes to the MageForge extension will be documented here.
 If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
+## [0.8.1](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.8.0...v0.8.1) (2026-08-13)
+
+
+### Bug Fixes
+
+* improve template override command in context menu ([beb31b5](https://github.com/OpenForgeProject/mageforge-vscode/commit/beb31b5af459416ecd902246944a3d694a15c295))
+* Themes-Refresh Button load infinite. ([4063e17](https://github.com/OpenForgeProject/mageforge-vscode/commit/4063e17626af4db6ec65635e9e7dc834a5378ab7))
+* update pre-commit script permissions ([521c2ad](https://github.com/OpenForgeProject/mageforge-vscode/commit/521c2adfb142d63e5be85f2ceb0cb6ec4d838c39))
+* update pre-commit script to include linting, formatting, and unit tests ([a1999fa](https://github.com/OpenForgeProject/mageforge-vscode/commit/a1999faefaa4e7a9671c62963c4e7f114d7437fc))
+
 ## [0.8.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.7.0...v0.8.0) (2026-08-12)
 
 
