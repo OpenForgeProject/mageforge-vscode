@@ -65,7 +65,7 @@ jobs:
               run: npm run test:unit:coverage
 
             - name: Upload coverage to Codecov
-              uses: codecov/codecov-action@v5
+              uses: codecov/codecov-action@v7
               if: github.repository == 'OpenForgeProject/mageforge-vscode'
               with:
                   files: ./coverage/lcov.info
