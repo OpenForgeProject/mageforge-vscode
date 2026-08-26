@@ -3,7 +3,7 @@ import mockRequire = require('mock-require');
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { createMockWebviewView } from './setup';
+import { createMockWebviewView, restoreVscodeMock } from './setup';
 
 function makeTestUrl(path: string): string {
     return `https://github.com/${path}`;
@@ -28,6 +28,7 @@ suite('welcomeProvider.ts unit tests', () => {
 
     teardown(() => {
         mockRequire.stop('../../magento');
+        restoreVscodeMock();
         fs.rmSync(sandbox, { recursive: true, force: true });
     });
 
@@ -49,6 +50,115 @@ suite('welcomeProvider.ts unit tests', () => {
         assert.ok(view.webview.html.includes('DDEV'));
         assert.ok(view.webview.html.includes('Build Theme'));
         assert.ok(view.webview.html.includes('mageforge.theme.build'));
+    });
+
+    test('renders configured quick actions', async () => {
+        const vscode = require('vscode');
+        vscode.workspace.getConfiguration = () => ({
+            get: <T>(_key: string, defaultValue?: T): T => defaultValue as T,
+        });
+
+        const { WelcomeViewProvider } = loadWelcomeProvider({
+            getMagentoRoot: () => createMagentoRoot(),
+            getExecutionEnvironment: () => 'local',
+        });
+
+        const provider = new WelcomeViewProvider({ fsPath: '/ext' } as import('vscode').Uri);
+        const view = createMockWebviewView();
+        await provider.resolveWebviewView(view as unknown as import('vscode').WebviewView);
+
+        assert.ok(view.webview.html.includes('Build Theme'));
+        assert.ok(view.webview.html.includes('Rate'));
+    });
+
+    test('falls back to defaults when quick actions setting is empty', async () => {
+        const vscode = require('vscode');
+        vscode.workspace.getConfiguration = () => ({
+            get: <T>(_key: string, defaultValue?: T): T => defaultValue as T,
+        });
+
+        const { WelcomeViewProvider } = loadWelcomeProvider({
+            getMagentoRoot: () => createMagentoRoot(),
+            getExecutionEnvironment: () => 'local',
+        });
+
+        const provider = new WelcomeViewProvider({ fsPath: '/ext' } as import('vscode').Uri);
+        const view = createMockWebviewView();
+        await provider.resolveWebviewView(view as unknown as import('vscode').WebviewView);
+
+        assert.ok(view.webview.html.includes('Build Theme'));
+        assert.ok(view.webview.html.includes('Feature Request'));
+    });
+
+    test('filters invalid quick actions from settings', async () => {
+        const vscode = require('vscode');
+        vscode.workspace.getConfiguration = () => ({
+            get: <T>(_key: string, defaultValue?: T): T =>
+                [
+                    { label: 'Valid', command: 'mageforge.theme.build', icon: 'hammer' },
+                    { label: 'Bad URL', url: 'javascript:alert(1)', icon: 'bug' },
+                    { label: 'No action', icon: 'bug' },
+                    {
+                        label: 'External command',
+                        command: 'workbench.action.closeAllEditors',
+                        icon: 'bug',
+                    },
+                ] as unknown as T,
+        });
+
+        const { WelcomeViewProvider } = loadWelcomeProvider({
+            getMagentoRoot: () => createMagentoRoot(),
+            getExecutionEnvironment: () => 'local',
+        });
+
+        const provider = new WelcomeViewProvider({ fsPath: '/ext' } as import('vscode').Uri);
+        const view = createMockWebviewView();
+        await provider.resolveWebviewView(view as unknown as import('vscode').WebviewView);
+
+        assert.ok(view.webview.html.includes('Valid'));
+        assert.ok(!view.webview.html.includes('Bad URL'));
+        assert.ok(!view.webview.html.includes('No action'));
+        assert.ok(!view.webview.html.includes('External command'));
+    });
+
+    test('renders remove buttons and add/edit buttons when Magento root exists', async () => {
+        const vscode = require('vscode');
+        vscode.workspace.getConfiguration = () => ({
+            get: <T>(_key: string, defaultValue?: T): T => defaultValue as T,
+        });
+
+        const { WelcomeViewProvider } = loadWelcomeProvider({
+            getMagentoRoot: () => createMagentoRoot(),
+            getExecutionEnvironment: () => 'local',
+        });
+
+        const provider = new WelcomeViewProvider({ fsPath: '/ext' } as import('vscode').Uri);
+        const view = createMockWebviewView();
+        await provider.resolveWebviewView(view as unknown as import('vscode').WebviewView);
+
+        assert.ok(view.webview.html.includes('data-remove-index="0"'));
+        assert.ok(view.webview.html.includes('btn-add-quick-action'));
+        assert.ok(view.webview.html.includes('btn-edit-quick-actions'));
+    });
+
+    test('does not render manage buttons without Magento root', async () => {
+        const vscode = require('vscode');
+        vscode.workspace.getConfiguration = () => ({
+            get: <T>(_key: string, defaultValue?: T): T => defaultValue as T,
+        });
+
+        const { WelcomeViewProvider } = loadWelcomeProvider({
+            getMagentoRoot: () => undefined,
+            getExecutionEnvironment: () => 'local',
+        });
+
+        const provider = new WelcomeViewProvider({ fsPath: '/ext' } as import('vscode').Uri);
+        const view = createMockWebviewView();
+        await provider.resolveWebviewView(view as unknown as import('vscode').WebviewView);
+
+        assert.ok(!view.webview.html.includes('<button class="action action-add"'));
+        assert.ok(!view.webview.html.includes('<button class="action action-edit"'));
+        assert.ok(!view.webview.html.includes('class="action-remove"'));
     });
 
     test('handles webviewReady message by sending version info', async () => {
@@ -73,9 +183,10 @@ suite('welcomeProvider.ts unit tests', () => {
         assert.ok(view.webview.onDidReceiveMessageHandler);
         view.webview.onDidReceiveMessageHandler!({ type: 'webviewReady' });
 
-        // Wait for async version check with a small poll.
+        // Wait for async version check with a small poll. The version check
+        // spawns curl, which can be slow on some runs, so we allow extra time.
         let versionMessage = view.webview.messages.find((m) => m.type === 'versionInfo');
-        for (let i = 0; i < 50 && !versionMessage; i++) {
+        for (let i = 0; i < 200 && !versionMessage; i++) {
             await new Promise((resolve) => setTimeout(resolve, 10));
             versionMessage = view.webview.messages.find((m) => m.type === 'versionInfo');
         }

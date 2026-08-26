@@ -12,7 +12,7 @@ interface QuickAction {
     icon: string;
 }
 
-const QUICK_ACTIONS: QuickAction[] = [
+const DEFAULT_QUICK_ACTIONS: QuickAction[] = [
     { label: 'Build Theme', command: 'mageforge.theme.build', icon: 'hammer' },
     { label: 'Watch Theme', command: 'mageforge.theme.watch', icon: 'eye' },
     { label: 'Inspector', command: 'mageforge.theme.inspector', icon: 'search' },
@@ -28,6 +28,62 @@ const QUICK_ACTIONS: QuickAction[] = [
         icon: 'star',
     },
 ];
+
+/**
+ * Load the user-configured quick actions. Falls back to the default set when
+ * the configuration is empty or invalid.
+ */
+function getQuickActions(): QuickAction[] {
+    const config = vscode.workspace
+        .getConfiguration('mageforge')
+        .get<QuickAction[]>('quickActions');
+
+    if (!Array.isArray(config) || config.length === 0) {
+        return DEFAULT_QUICK_ACTIONS;
+    }
+
+    return config.filter((action) => isValidQuickAction(action));
+}
+
+/**
+ * Validate a quick action from user settings.
+ * - Requires a label and an icon.
+ * - Requires either a command or a URL, but not both.
+ * - Commands must belong to the mageforge namespace.
+ * - URLs must use a safe https scheme.
+ */
+function isValidQuickAction(action: unknown): action is QuickAction {
+    if (!action || typeof action !== 'object') {
+        return false;
+    }
+
+    const { label, icon, command, url } = action as Partial<QuickAction>;
+
+    if (typeof label !== 'string' || label.trim().length === 0) {
+        return false;
+    }
+    if (typeof icon !== 'string' || icon.trim().length === 0) {
+        return false;
+    }
+
+    const hasCommand = typeof command === 'string' && command.trim().length > 0;
+    const hasUrl = typeof url === 'string' && url.trim().length > 0;
+
+    if (!hasCommand && !hasUrl) {
+        return false;
+    }
+    if (hasCommand && hasUrl) {
+        return false;
+    }
+    if (hasCommand && !command!.startsWith('mageforge.')) {
+        return false;
+    }
+    if (hasUrl && !isAllowedExternalUrl(url!)) {
+        return false;
+    }
+
+    return true;
+}
 
 const DOCS_URL = 'https://github.com/OpenForgeProject/mageforge/blob/main/docs/';
 const CHANGELOG_URL = 'https://github.com/OpenForgeProject/mageforge-vscode/blob/main/CHANGELOG.md';
@@ -51,13 +107,42 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         };
 
         webviewView.webview.onDidReceiveMessage(
-            (message: { command?: string; url?: string; type?: string }) => {
+            (message: {
+                command?: string;
+                url?: string;
+                type?: string;
+                index?: number;
+                fromIndex?: number;
+                toIndex?: number;
+            }) => {
                 if (message.url && isAllowedExternalUrl(message.url)) {
                     void vscode.env.openExternal(vscode.Uri.parse(message.url));
                 } else if (message.command) {
                     void vscode.commands.executeCommand(message.command);
                 } else if (message.type === 'webviewReady') {
                     void this.sendVersionInfo(webviewView.webview);
+                } else if (message.type === 'addQuickAction') {
+                    void vscode.commands.executeCommand('mageforge.addQuickAction');
+                } else if (
+                    message.type === 'removeQuickAction' &&
+                    typeof message.index === 'number'
+                ) {
+                    void vscode.commands.executeCommand(
+                        'mageforge.removeQuickAction',
+                        message.index,
+                    );
+                } else if (message.type === 'settingsQuickActions') {
+                    void vscode.commands.executeCommand('mageforge.settingsQuickActions');
+                } else if (
+                    message.type === 'reorderQuickAction' &&
+                    typeof message.fromIndex === 'number' &&
+                    typeof message.toIndex === 'number'
+                ) {
+                    void vscode.commands.executeCommand(
+                        'mageforge.reorderQuickAction',
+                        message.fromIndex,
+                        message.toIndex,
+                    );
                 }
             },
         );
@@ -70,6 +155,14 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         webviewView.onDidChangeVisibility(() => {
             if (webviewView.visible) {
                 void this.sendVersionInfo(webviewView.webview);
+            }
+        });
+
+        // Re-render the welcome view when quick action settings change so the
+        // user sees the new buttons without reloading the window.
+        vscode.workspace.onDidChangeConfiguration((event) => {
+            if (event.affectsConfiguration('mageforge.quickActions')) {
+                webviewView.webview.html = this.getHtml(webviewView.webview);
             }
         });
     }
@@ -249,13 +342,27 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         const env = magentoRoot ? getExecutionEnvironment(magentoRoot) : 'local';
         const envBadge = this.getEnvironmentBadge(env);
 
-        const actionButtons = QUICK_ACTIONS.map(
-            (action) => `
-            <button class="action" ${action.command ? `data-command="${action.command}"` : ''} ${action.url ? `data-url="${action.url}"` : ''} title="${action.label}">
+        const actionButtons = getQuickActions()
+            .map(
+                (action, index) => `
+            <button class="action" draggable="true" ${action.command ? `data-command="${action.command}"` : ''} ${action.url ? `data-url="${action.url}"` : ''} title="${action.label}" data-index="${index}">
+                ${magentoRoot ? `<span class="action-remove" data-remove-index="${index}" title="Remove quick action"><i class="ti ti-x"></i></span>` : ''}
                 <i class="ti ti-${action.icon}"></i>
                 <span>${action.label}</span>
             </button>`,
-        ).join('');
+            )
+            .join('');
+
+        const manageButtons = magentoRoot
+            ? `<button class="action action-add" id="btn-add-quick-action" title="Add quick action">
+                <i class="ti ti-plus"></i>
+                <span>Add</span>
+            </button>
+            <button class="action action-edit" id="btn-edit-quick-actions" title="Quick actions settings">
+                <i class="ti ti-settings"></i>
+                <span>Settings</span>
+            </button>`
+            : '';
 
         return /* html */ `<!DOCTYPE html>
 <html lang="en">
@@ -479,6 +586,55 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             position: relative;
             z-index: 1;
         }
+        .action-add,
+        .action-edit {
+            border-style: dashed;
+            opacity: 0.75;
+        }
+        .action-add:hover,
+        .action-edit:hover {
+            opacity: 1;
+        }
+        .action .action-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            font-size: 10px;
+            line-height: 1;
+            color: var(--vscode-descriptionForeground);
+            background: transparent;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+            z-index: 2;
+        }
+        .action:hover .action-remove {
+            opacity: 1;
+        }
+        .action .action-remove:hover {
+            color: var(--vscode-errorForeground);
+            background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.15));
+        }
+        .action .action-remove .ti {
+            font-size: 10px !important;
+            color: inherit !important;
+        }
+        .action.dragging {
+            opacity: 0.5;
+            border-style: dashed;
+        }
+        .action.drag-over {
+            border-color: var(--accent);
+            background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.08));
+        }
 
         /* ── Resources ────────────────────────── */
         .links {
@@ -546,6 +702,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         <h2>Quick Actions</h2>
         <div class="actions">
             ${actionButtons}
+            ${manageButtons}
         </div>
     </div>
 
@@ -596,6 +753,88 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
                 }
             });
         });
+
+        const addBtn = document.getElementById('btn-add-quick-action');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                vscode.postMessage({ type: 'addQuickAction' });
+            });
+        }
+
+        const settingsBtn = document.getElementById('btn-edit-quick-actions');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                vscode.postMessage({ type: 'settingsQuickActions' });
+            });
+        }
+
+        document.querySelectorAll('.action-remove').forEach((removeBtn) => {
+            removeBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const index = removeBtn.getAttribute('data-remove-index');
+                if (index !== null) {
+                    vscode.postMessage({ type: 'removeQuickAction', index: parseInt(index, 10) });
+                }
+            });
+        });
+
+        setupDragAndDrop();
+
+        function setupDragAndDrop() {
+            const container = document.querySelector('.actions');
+            if (!container) {
+                return;
+            }
+
+            let dragSrcIndex = -1;
+
+            container.querySelectorAll('.action[draggable="true"]').forEach((button) => {
+                button.addEventListener('dragstart', (event) => {
+                    dragSrcIndex = parseInt(button.getAttribute('data-index') ?? '-1', 10);
+                    button.classList.add('dragging');
+                    event.dataTransfer?.setData('text/plain', String(dragSrcIndex));
+                    event.dataTransfer && (event.dataTransfer.effectAllowed = 'move');
+                });
+
+                button.addEventListener('dragend', () => {
+                    button.classList.remove('dragging');
+                    container.querySelectorAll('.action').forEach((el) => {
+                        el.classList.remove('drag-over');
+                    });
+                    dragSrcIndex = -1;
+                });
+
+                button.addEventListener('dragenter', (event) => {
+                    event.preventDefault();
+                    if (button !== container.querySelector('.dragging')) {
+                        button.classList.add('drag-over');
+                    }
+                });
+
+                button.addEventListener('dragleave', () => {
+                    button.classList.remove('drag-over');
+                });
+
+                button.addEventListener('dragover', (event) => {
+                    event.preventDefault();
+                    event.dataTransfer && (event.dataTransfer.dropEffect = 'move');
+                });
+
+                button.addEventListener('drop', (event) => {
+                    event.preventDefault();
+                    button.classList.remove('drag-over');
+                    const dropTargetIndex = parseInt(button.getAttribute('data-index') ?? '-1', 10);
+                    if (dragSrcIndex === -1 || dropTargetIndex === -1 || dragSrcIndex === dropTargetIndex) {
+                        return;
+                    }
+                    vscode.postMessage({
+                        type: 'reorderQuickAction',
+                        fromIndex: dragSrcIndex,
+                        toIndex: dropTargetIndex,
+                    });
+                });
+            });
+        }
 
         // Handle version info from extension
         window.addEventListener('message', (event) => {

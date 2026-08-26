@@ -1,6 +1,11 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { CommandsProvider, MAGEFORGE_COMMANDS, MageforgeCommand } from './commandsProvider';
+import {
+    CommandsProvider,
+    getAvailableMageforgeCommands,
+    MAGEFORGE_COMMANDS,
+    MageforgeCommand,
+} from './commandsProvider';
 import { ThemeTreeItem, ThemesProvider } from './themesProvider';
 import { WelcomeViewProvider } from './welcomeProvider';
 import { ChangelogViewProvider } from './changelogProvider';
@@ -67,6 +72,17 @@ export function activate(context: vscode.ExtensionContext) {
             commandsProvider.refresh(),
         ),
         vscode.commands.registerCommand('mageforge.refreshThemes', () => themesProvider.refresh()),
+        vscode.commands.registerCommand('mageforge.addQuickAction', () => addQuickAction()),
+        vscode.commands.registerCommand('mageforge.removeQuickAction', (index: number) =>
+            removeQuickAction(index),
+        ),
+        vscode.commands.registerCommand('mageforge.settingsQuickActions', () =>
+            settingsQuickActions(),
+        ),
+        vscode.commands.registerCommand(
+            'mageforge.reorderQuickAction',
+            (fromIndex: number, toIndex: number) => reorderQuickAction(fromIndex, toIndex),
+        ),
         vscode.commands.registerCommand(
             'mageforge.template.overrideFile',
             async (uri?: vscode.Uri) => {
@@ -88,6 +104,178 @@ export function activate(context: vscode.ExtensionContext) {
             );
         }),
     );
+}
+
+/**
+ * Let the user pick a MageForge command that is not already a quick action and
+ * append it to the `mageforge.quickActions` setting.
+ */
+async function addQuickAction(): Promise<void> {
+    const magentoRoot = getMagentoRoot();
+    if (!magentoRoot) {
+        void vscode.window.showErrorMessage('MageForge: No workspace folder open.');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('mageforge');
+    const currentActions = config.get<
+        { label: string; command?: string; url?: string; icon: string }[]
+    >('quickActions', []);
+
+    let availableCliCommands: string[];
+    try {
+        availableCliCommands = await getAvailableMageforgeCommands(magentoRoot);
+    } catch {
+        void vscode.window.showErrorMessage(
+            'MageForge: Could not load available commands. Is the MageForge CLI installed?',
+        );
+        return;
+    }
+
+    const commandByCli = new Map(MAGEFORGE_COMMANDS.map((cmd) => [cmd.cliCommand, cmd]));
+    const existingCommands = new Set(
+        currentActions.filter((a) => a.command).map((a) => a.command!),
+    );
+
+    const choices = availableCliCommands
+        .map((cliCommand) => commandByCli.get(cliCommand))
+        .filter((cmd): cmd is MageforgeCommand => Boolean(cmd))
+        .filter((cmd) => !existingCommands.has(cmd.id))
+        .map((cmd) => ({
+            label: cmd.label,
+            description: cmd.description,
+            mageforgeCommand: cmd,
+        }));
+
+    if (choices.length === 0) {
+        void vscode.window.showInformationMessage(
+            'MageForge: All available commands are already quick actions.',
+        );
+        return;
+    }
+
+    const picked = await vscode.window.showQuickPick(choices, {
+        placeHolder: 'Select a command to add as quick action',
+    });
+    if (!picked) {
+        return;
+    }
+
+    const icon = await pickQuickActionIcon(picked.mageforgeCommand.label);
+    if (!icon) {
+        return;
+    }
+
+    const newAction = {
+        label: picked.mageforgeCommand.label,
+        command: picked.mageforgeCommand.id,
+        icon,
+    };
+
+    await config.update(
+        'quickActions',
+        [...currentActions, newAction],
+        vscode.ConfigurationTarget.Workspace,
+    );
+    void vscode.window.showInformationMessage(
+        `MageForge: Added "${picked.mageforgeCommand.label}" to quick actions.`,
+    );
+}
+
+/**
+ * Reorder quick actions by moving an item from one index to another.
+ */
+async function reorderQuickAction(fromIndex: number, toIndex: number): Promise<void> {
+    const config = vscode.workspace.getConfiguration('mageforge');
+    const currentActions = config.get<
+        { label: string; command?: string; url?: string; icon: string }[]
+    >('quickActions', []);
+
+    if (
+        fromIndex < 0 ||
+        fromIndex >= currentActions.length ||
+        toIndex < 0 ||
+        toIndex >= currentActions.length ||
+        fromIndex === toIndex
+    ) {
+        return;
+    }
+
+    const updated = [...currentActions];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+
+    await config.update('quickActions', updated, vscode.ConfigurationTarget.Workspace);
+}
+
+/**
+ * Remove a quick action by its index in the settings array.
+ */
+async function removeQuickAction(index: number): Promise<void> {
+    const config = vscode.workspace.getConfiguration('mageforge');
+    const currentActions = config.get<
+        { label: string; command?: string; url?: string; icon: string }[]
+    >('quickActions', []);
+
+    if (index < 0 || index >= currentActions.length) {
+        return;
+    }
+
+    const removed = currentActions[index];
+    const updated = [...currentActions.slice(0, index), ...currentActions.slice(index + 1)];
+
+    await config.update('quickActions', updated, vscode.ConfigurationTarget.Workspace);
+    void vscode.window.showInformationMessage(
+        `MageForge: Removed "${removed.label}" from quick actions.`,
+    );
+}
+
+/**
+ * Open settings.json with the mageforge.quickActions key focused so the user
+ * can reorder, rename and change icons manually.
+ */
+async function settingsQuickActions(): Promise<void> {
+    await vscode.commands.executeCommand('workbench.action.openSettings', 'mageforge');
+}
+
+/**
+ * Let the user pick a Tabler icon for the new quick action.
+ * Defaults to the command's suggested icon.
+ */
+async function pickQuickActionIcon(commandLabel: string): Promise<string | undefined> {
+    const icons = [
+        { label: 'Hammer', icon: 'hammer' },
+        { label: 'Eye', icon: 'eye' },
+        { label: 'Search', icon: 'search' },
+        { label: 'Checklist', icon: 'checklist' },
+        { label: 'Tools', icon: 'tools' },
+        { label: 'Trash', icon: 'trash' },
+        { label: 'List', icon: 'list-unordered' },
+        { label: 'Copy', icon: 'copy' },
+        { label: 'Cloud Download', icon: 'cloud-download' },
+        { label: 'Pulse', icon: 'pulse' },
+        { label: 'Info', icon: 'info' },
+        { label: 'Star', icon: 'star' },
+        { label: 'Bulb', icon: 'bulb' },
+        { label: 'Color', icon: 'symbol-color' },
+        { label: 'Refresh', icon: 'refresh' },
+        { label: 'Shield', icon: 'shield' },
+        { label: 'Package', icon: 'package' },
+        { label: 'Rocket', icon: 'rocket' },
+        { label: 'Settings', icon: 'settings' },
+        { label: 'Terminal', icon: 'terminal' },
+    ];
+
+    const choices = icons.map((item) => ({
+        label: `$(${item.icon}) ${item.label}`,
+        icon: item.icon,
+    }));
+
+    const picked = await vscode.window.showQuickPick(choices, {
+        placeHolder: `Select an icon for "${commandLabel}"`,
+    });
+
+    return picked?.icon;
 }
 
 /**

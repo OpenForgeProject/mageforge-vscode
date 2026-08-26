@@ -6,22 +6,28 @@ interface MockConfig {
 
 let lastWebviewPanel: { webview: ReturnType<typeof createMockWebview> } | undefined;
 const executedCommands: string[] = [];
+const executedArgs: unknown[] = [];
 const openedExternals: string[] = [];
+const registeredCommandHandlers = new Map<string, (...args: unknown[]) => unknown>();
 
 export function getLastWebviewPanel():
     { webview: ReturnType<typeof createMockWebview> } | undefined {
     return lastWebviewPanel;
 }
 
-const defaultVscodeMock = createMockVscode();
-
 export function restoreVscodeMock(): void {
-    mockRequire('vscode', defaultVscodeMock);
+    mockRequire('vscode', createMockVscode());
 }
 
 export function resetMockState(): void {
     executedCommands.length = 0;
+    executedArgs.length = 0;
     openedExternals.length = 0;
+    registeredCommandHandlers.clear();
+}
+
+export function getRegisteredCommand(id: string): ((...args: unknown[]) => unknown) | undefined {
+    return registeredCommandHandlers.get(id);
 }
 
 export const mochaHooks = {
@@ -97,6 +103,8 @@ function createMockVscode(config: MockConfig = {}): typeof import('vscode') {
             }),
             workspaceFolders: config['workspace.workspaceFolders'] as
                 { uri: { fsPath: string }; name: string; index: number }[] | undefined,
+            onDidChangeConfiguration: () => ({ dispose: () => undefined }),
+            openTextDocument: () => Promise.resolve({}),
         },
         window: {
             createTerminal: () => ({
@@ -114,6 +122,9 @@ function createMockVscode(config: MockConfig = {}): typeof import('vscode') {
                     dispose: () => undefined,
                 };
             },
+            registerWebviewViewProvider: () => ({ dispose: () => undefined }),
+            registerTreeDataProvider: () => ({ dispose: () => undefined }),
+            createTreeView: () => ({ dispose: () => undefined }),
             terminals: [],
             showErrorMessage: () => Promise.resolve(undefined),
             showInformationMessage: () => Promise.resolve(undefined),
@@ -122,13 +133,26 @@ function createMockVscode(config: MockConfig = {}): typeof import('vscode') {
                 { document: { uri: { fsPath: string } } } | undefined,
         },
         commands: {
-            executeCommand: (command: string, ..._args: unknown[]) => {
+            registerCommand: (command: string, handler: (...args: unknown[]) => unknown) => {
+                registeredCommandHandlers.set(command, handler);
+                return { dispose: () => registeredCommandHandlers.delete(command) };
+            },
+            executeCommand: (command: string, ...args: unknown[]) => {
                 executedCommands.push(command);
+                executedArgs.push(args);
                 return Promise.resolve();
             },
             get executedCommands() {
                 return executedCommands;
             },
+            get executedArgs() {
+                return executedArgs;
+            },
+        },
+        ConfigurationTarget: {
+            Global: 1,
+            Workspace: 2,
+            WorkspaceFolder: 3,
         },
         env: {
             openExternal: (uri: { toString: () => string }) => {

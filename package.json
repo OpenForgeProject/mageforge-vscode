@@ -59,6 +59,69 @@
                     "default": "php",
                     "description": "PHP binary for local execution. Can be a full command like `docker-compose exec php` for custom setups.",
                     "order": 4
+                },
+                "mageforge.quickActions": {
+                    "type": "array",
+                    "default": [
+                        {
+                            "label": "Build Theme",
+                            "command": "mageforge.theme.build",
+                            "icon": "hammer"
+                        },
+                        {
+                            "label": "Watch Theme",
+                            "command": "mageforge.theme.watch",
+                            "icon": "eye"
+                        },
+                        {
+                            "label": "Inspector",
+                            "command": "mageforge.theme.inspector",
+                            "icon": "search"
+                        },
+                        {
+                            "label": "Hyvä Check",
+                            "command": "mageforge.hyva.compatibilityCheck",
+                            "icon": "checklist"
+                        },
+                        {
+                            "label": "Feature Request",
+                            "url": "https://github.com/OpenForgeProject/mageforge-vscode/issues/new?template=feature_request.md",
+                            "icon": "bulb"
+                        },
+                        {
+                            "label": "Rate",
+                            "url": "https://marketplace.visualstudio.com/items?itemName=OpenForgeProject.mageforge&ssr=false#review-details",
+                            "icon": "star"
+                        }
+                    ],
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "label",
+                            "icon"
+                        ],
+                        "properties": {
+                            "label": {
+                                "type": "string",
+                                "description": "Display label of the quick action button."
+                            },
+                            "command": {
+                                "type": "string",
+                                "description": "VS Code command to execute when clicked (e.g. `mageforge.theme.build`)."
+                            },
+                            "url": {
+                                "type": "string",
+                                "description": "External URL to open when clicked. Only `https:` links are allowed."
+                            },
+                            "icon": {
+                                "type": "string",
+                                "description": "Tabler icon name without the `ti-` prefix (e.g. `hammer`)."
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "markdownDescription": "Buttons shown in the MageForge Welcome view under **Quick Actions**. Either `command` or `url` must be provided. Commands are limited to the `mageforge.` namespace.",
+                    "order": 5
                 }
             }
         },
@@ -183,6 +246,28 @@
                 "icon": "$(refresh)"
             },
             {
+                "command": "mageforge.addQuickAction",
+                "title": "Add Quick Action",
+                "category": "MageForge",
+                "icon": "$(add)"
+            },
+            {
+                "command": "mageforge.removeQuickAction",
+                "title": "Remove Quick Action",
+                "category": "MageForge"
+            },
+            {
+                "command": "mageforge.reorderQuickAction",
+                "title": "Reorder Quick Action",
+                "category": "MageForge"
+            },
+            {
+                "command": "mageforge.settingsQuickActions",
+                "title": "Quick Actions Settings",
+                "category": "MageForge",
+                "icon": "$(settings)"
+            },
+            {
                 "command": "mageforge.template.overrideFile",
                 "title": "Override File…",
                 "category": "MageForge",
@@ -209,6 +294,22 @@
                 },
                 {
                     "command": "mageforge.refreshThemes",
+                    "when": "false"
+                },
+                {
+                    "command": "mageforge.addQuickAction",
+                    "when": "false"
+                },
+                {
+                    "command": "mageforge.removeQuickAction",
+                    "when": "false"
+                },
+                {
+                    "command": "mageforge.reorderQuickAction",
+                    "when": "false"
+                },
+                {
+                    "command": "mageforge.settingsQuickActions",
                     "when": "false"
                 }
             ],
