@@ -3,6 +3,29 @@
 All changes to the MageForge extension will be documented here.
 If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
+## [0.9.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.8.0...v0.9.0) (2026-08-26)
+
+
+### Features
+
+* add quick actions management to MageForge ([75f7509](https://github.com/OpenForgeProject/mageforge-vscode/commit/75f7509818dfb239ca3cb6ed1d4a92180d045eac))
+* add refresh commands functionality to command palette and view ([7d834eb](https://github.com/OpenForgeProject/mageforge-vscode/commit/7d834eb505b733299990b997047363f48a34ffab))
+* implement dynamic list for available commands and themes on configuration change ([fd23e53](https://github.com/OpenForgeProject/mageforge-vscode/commit/fd23e53217ce3a5b71f28243d218feb13058154a))
+
+
+### Bug Fixes
+
+* improve template override command in context menu ([beb31b5](https://github.com/OpenForgeProject/mageforge-vscode/commit/beb31b5af459416ecd902246944a3d694a15c295))
+* Themes-Refresh Button load infinite. ([4063e17](https://github.com/OpenForgeProject/mageforge-vscode/commit/4063e17626af4db6ec65635e9e7dc834a5378ab7))
+* update pre-commit script permissions ([521c2ad](https://github.com/OpenForgeProject/mageforge-vscode/commit/521c2adfb142d63e5be85f2ceb0cb6ec4d838c39))
+* update pre-commit script to include linting, formatting, and unit tests ([a1999fa](https://github.com/OpenForgeProject/mageforge-vscode/commit/a1999faefaa4e7a9671c62963c4e7f114d7437fc))
+
+
+### Maintenance
+
+* **deps-dev:** bump @types/vscode from 1.125.0 to 1.134.0 in the dev-dependencies group ([c8160a3](https://github.com/OpenForgeProject/mageforge-vscode/commit/c8160a38577e58a8ff91ba8924f674990aa2da9c))
+* **deps-dev:** bump @types/vscode in the dev-dependencies group ([c895621](https://github.com/OpenForgeProject/mageforge-vscode/commit/c8956217d017570663cfb8ccd3cba944c7cb4ecc))
+
 ## [0.8.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.7.0...v0.8.0) (2026-08-12)
 
 
