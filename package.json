@@ -171,6 +171,12 @@
                 "icon": "$(info)"
             },
             {
+                "command": "mageforge.refreshCommands",
+                "title": "Refresh Commands",
+                "category": "MageForge",
+                "icon": "$(refresh)"
+            },
+            {
                 "command": "mageforge.refreshThemes",
                 "title": "Refresh Themes",
                 "category": "MageForge",
@@ -198,6 +204,10 @@
         "menus": {
             "commandPalette": [
                 {
+                    "command": "mageforge.refreshCommands",
+                    "when": "false"
+                },
+                {
                     "command": "mageforge.refreshThemes",
                     "when": "false"
                 }
@@ -210,6 +220,11 @@
                 }
             ],
             "view/title": [
+                {
+                    "command": "mageforge.refreshCommands",
+                    "when": "view == mageforge.commands",
+                    "group": "navigation"
+                },
                 {
                     "command": "mageforge.refreshThemes",
                     "when": "view == mageforge.themes",
