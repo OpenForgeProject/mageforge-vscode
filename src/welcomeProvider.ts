@@ -354,11 +354,11 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             .join('');
 
         const manageButtons = magentoRoot
-            ? `<button class="action action-add" id="btn-add-quick-action" title="Add quick action">
+            ? `<button class="action action-add" id="btn-add-quick-action" title="Add quick action" draggable="false">
                 <i class="ti ti-plus"></i>
                 <span>Add</span>
             </button>
-            <button class="action action-edit" id="btn-edit-quick-actions" title="Quick actions settings">
+            <button class="action action-edit" id="btn-edit-quick-actions" title="Quick actions settings" draggable="false">
                 <i class="ti ti-settings"></i>
                 <span>Settings</span>
             </button>`
@@ -787,53 +787,116 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
             }
 
             let dragSrcIndex = -1;
+            let isDragging = false;
 
-            container.querySelectorAll('.action[draggable="true"]').forEach((button) => {
-                button.addEventListener('dragstart', (event) => {
-                    dragSrcIndex = parseInt(button.getAttribute('data-index') ?? '-1', 10);
-                    button.classList.add('dragging');
-                    event.dataTransfer?.setData('text/plain', String(dragSrcIndex));
-                    event.dataTransfer && (event.dataTransfer.effectAllowed = 'move');
+            function getActionButton(target) {
+                return target.closest('.action[draggable="true"]');
+            }
+
+            function getActionIndex(button) {
+                if (!button) {
+                    return -1;
+                }
+                return parseInt(button.getAttribute('data-index') ?? '-1', 10);
+            }
+
+            function clearDragOver() {
+                container.querySelectorAll('.action.drag-over').forEach((el) => {
+                    el.classList.remove('drag-over');
                 });
+            }
 
-                button.addEventListener('dragend', () => {
+            container.addEventListener('dragstart', (event) => {
+                const button = getActionButton(event.target);
+                if (!button) {
+                    return;
+                }
+                isDragging = true;
+                dragSrcIndex = getActionIndex(button);
+                button.classList.add('dragging');
+                event.dataTransfer?.setData('text/plain', String(dragSrcIndex));
+                if (event.dataTransfer) {
+                    event.dataTransfer.effectAllowed = 'move';
+                }
+            });
+
+            container.addEventListener('dragend', (event) => {
+                const button = getActionButton(event.target);
+                if (button) {
                     button.classList.remove('dragging');
-                    container.querySelectorAll('.action').forEach((el) => {
-                        el.classList.remove('drag-over');
-                    });
-                    dragSrcIndex = -1;
-                });
-
-                button.addEventListener('dragenter', (event) => {
-                    event.preventDefault();
-                    if (button !== container.querySelector('.dragging')) {
-                        button.classList.add('drag-over');
-                    }
-                });
-
-                button.addEventListener('dragleave', () => {
-                    button.classList.remove('drag-over');
-                });
-
-                button.addEventListener('dragover', (event) => {
-                    event.preventDefault();
-                    event.dataTransfer && (event.dataTransfer.dropEffect = 'move');
-                });
-
-                button.addEventListener('drop', (event) => {
-                    event.preventDefault();
-                    button.classList.remove('drag-over');
-                    const dropTargetIndex = parseInt(button.getAttribute('data-index') ?? '-1', 10);
-                    if (dragSrcIndex === -1 || dropTargetIndex === -1 || dragSrcIndex === dropTargetIndex) {
-                        return;
-                    }
-                    vscode.postMessage({
-                        type: 'reorderQuickAction',
-                        fromIndex: dragSrcIndex,
-                        toIndex: dropTargetIndex,
-                    });
+                }
+                clearDragOver();
+                dragSrcIndex = -1;
+                // Defer clearing the flag so the click event that sometimes
+                // follows a drag is suppressed.
+                window.requestAnimationFrame(() => {
+                    isDragging = false;
                 });
             });
+
+            container.addEventListener('dragenter', (event) => {
+                const button = getActionButton(event.target);
+                if (!button || getActionIndex(button) === dragSrcIndex) {
+                    return;
+                }
+                event.preventDefault();
+                button.classList.add('drag-over');
+            });
+
+            container.addEventListener('dragleave', (event) => {
+                const button = getActionButton(event.target);
+                if (!button) {
+                    return;
+                }
+                // Keep the highlight when moving between a button and its
+                // child elements (icon, label, remove handle).
+                if (getActionButton(event.relatedTarget) === button) {
+                    return;
+                }
+                button.classList.remove('drag-over');
+            });
+
+            container.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                if (event.dataTransfer) {
+                    event.dataTransfer.dropEffect = 'move';
+                }
+            });
+
+            container.addEventListener('drop', (event) => {
+                event.preventDefault();
+                clearDragOver();
+                const button = getActionButton(event.target);
+                if (!button) {
+                    return;
+                }
+                const dropTargetIndex = getActionIndex(button);
+                if (
+                    dragSrcIndex === -1 ||
+                    dropTargetIndex === -1 ||
+                    dragSrcIndex === dropTargetIndex
+                ) {
+                    return;
+                }
+                vscode.postMessage({
+                    type: 'reorderQuickAction',
+                    fromIndex: dragSrcIndex,
+                    toIndex: dropTargetIndex,
+                });
+            });
+
+            // Suppress the click event that some browsers fire right after a
+            // drag ends, which would otherwise trigger the dropped-on action.
+            container.addEventListener(
+                'click',
+                (event) => {
+                    if (isDragging) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                },
+                true,
+            );
         }
 
         // Handle version info from extension
