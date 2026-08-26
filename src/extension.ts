@@ -28,6 +28,16 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.createTreeView('mageforge.themes', { treeDataProvider: themesProvider }),
     );
 
+    // Refresh dynamic views when MageForge settings change.
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration((event) => {
+            if (event.affectsConfiguration('mageforge')) {
+                commandsProvider.refresh();
+                themesProvider.refresh();
+            }
+        }),
+    );
+
     // Notify the user and open the changelog after the extension was updated.
     void showUpdateNotificationIfNeeded(context, changelogProvider);
 
@@ -53,6 +63,9 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
+        vscode.commands.registerCommand('mageforge.refreshCommands', () =>
+            commandsProvider.refresh(),
+        ),
         vscode.commands.registerCommand('mageforge.refreshThemes', () => themesProvider.refresh()),
         vscode.commands.registerCommand(
             'mageforge.template.overrideFile',

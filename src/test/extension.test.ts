@@ -20,6 +20,7 @@ suite('Extension Integration Test Suite', () => {
 
         assert.ok(mageforgeCommands.includes('mageforge.theme.build'));
         assert.ok(mageforgeCommands.includes('mageforge.theme.watch'));
+        assert.ok(mageforgeCommands.includes('mageforge.refreshCommands'));
         assert.ok(mageforgeCommands.includes('mageforge.refreshThemes'));
         assert.ok(mageforgeCommands.includes('mageforge.showChangelog'));
         assert.ok(mageforgeCommands.includes('mageforge.updateMageforge'));
