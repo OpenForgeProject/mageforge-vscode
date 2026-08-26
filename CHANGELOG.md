@@ -3,6 +3,13 @@
 All changes to the MageForge extension will be documented here.
 If you have questions, feature requests or problems with this extention, please create an [issue on GitHub](https://github.com/OpenForgeProject/mageforge-vscode/issues).
 
+## [0.10.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.9.0...v0.10.0) (2026-08-26)
+
+
+### Features
+
+* add drag-and-drop functionality for quick actions ([7fd4bec](https://github.com/OpenForgeProject/mageforge-vscode/commit/7fd4bec714acd614c087d1fa6095c78b5d902a52))
+
 ## [0.9.0](https://github.com/OpenForgeProject/mageforge-vscode/compare/v0.8.0...v0.9.0) (2026-08-26)
 
 
